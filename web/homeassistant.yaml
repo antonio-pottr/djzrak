@@ -7,7 +7,7 @@
 
 rest_command:
   push_air:
-    url: https://air.<your-subdomain>.workers.dev/ingest
+    url: https://air.aloncar-mail.workers.dev/ingest
     method: post
     content_type: application/json
     headers:
