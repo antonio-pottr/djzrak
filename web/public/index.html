@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kvaliteta zraka — Đakovo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<style>
+  /* Home Assistant design tokens, names and values as published in the frontend:
+     resources/theme/typography.globals.ts, core.globals.ts, color/color.globals.ts */
+  :root {
+    color-scheme: light dark;
+
+    --ha-font-family-body: Roboto, Noto, "Noto Sans", system-ui, sans-serif;
+    --ha-font-size-s: 12px;
+    --ha-font-size-m: 14px;
+    --ha-font-size-l: 16px;
+    --ha-font-size-xl: 20px;
+    --ha-font-size-2xl: 24px;
+    --ha-font-size-4xl: 32px;
+    --ha-font-weight-normal: 400;
+    --ha-font-weight-medium: 500;
+    --ha-font-weight-bold: 700;
+    --ha-line-height-condensed: 1.2;
+    --ha-line-height-normal: 1.6;
+
+    --ha-space-1: 4px;
+    --ha-space-2: 8px;
+    --ha-space-3: 12px;
+    --ha-space-4: 16px;
+    --ha-space-6: 24px;
+    --ha-border-radius-lg: 12px;
+
+    --primary-background-color: #f7f7f8;
+    --card-background-color: #ffffff;
+    --primary-text-color: #212121;
+    --secondary-text-color: #5f6368;
+    --divider-color: #e3e3e4;
+    /* HA's long-standing state icon colour */
+    --state-icon-color: #44739e;
+    /* History charts use the Observable10 palette; its first colour is the line. */
+    --chart-line-color: #4269d0;
+    --chart-grid-color: #e6e6e7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --primary-background-color: #111111;
+      --card-background-color: #1c1c1c;
+      --primary-text-color: #e1e1e1;
+      --secondary-text-color: #9b9b9b;
+      --divider-color: rgba(225, 225, 225, .12);
+      --state-icon-color: #92b8dc;
+      --chart-line-color: #97bbf5;
+      --chart-grid-color: rgba(225, 225, 225, .1);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0 auto;
+    max-width: 840px;
+    /* Side gutter shrinks on a phone, and never lets a card touch the edge. */
+    padding: clamp(10px, 2.5vw, 20px) clamp(10px, 2.5vw, 20px) var(--ha-space-6);
+    overflow-x: hidden;
+    background: var(--primary-background-color);
+    color: var(--primary-text-color);
+    font-family: var(--ha-font-family-body);
+    font-size: var(--ha-font-size-m);
+    line-height: var(--ha-line-height-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1 { font-size: var(--ha-font-size-xl); font-weight: var(--ha-font-weight-normal);
+       line-height: var(--ha-line-height-condensed); margin: var(--ha-space-2) 0 var(--ha-space-4); }
+  h1 small { display: block; font-size: var(--ha-font-size-m);
+             color: var(--secondary-text-color); margin-top: var(--ha-space-1); }
+  h2 { font-size: var(--ha-font-size-l); font-weight: var(--ha-font-weight-normal);
+       line-height: var(--ha-line-height-condensed);
+       margin: var(--ha-space-6) 0 var(--ha-space-3); }
+
+  /* ha-card: white, 12px radius, hairline border, no shadow */
+  .card { background: var(--card-background-color);
+          border: 1px solid var(--divider-color);
+          border-radius: var(--ha-border-radius-lg);
+          padding: var(--ha-space-4); min-width: 0; }
+  .row { display: grid; gap: var(--ha-space-3); }
+  .row-2 { grid-template-columns: 1fr 1fr; }
+
+  .icon { display: block; width: 24px; height: 24px; flex: none;
+          fill: var(--state-icon-color); }
+
+  /* Area-card anatomy: icon centred on top, bold name, value beneath. */
+  .tile-center { text-align: center; }
+  .tile-center .icon { margin: var(--ha-space-1) auto var(--ha-space-3); width: 28px; height: 28px; }
+  .tile-center .k { font-size: var(--ha-font-size-l); font-weight: var(--ha-font-weight-bold); }
+  .tile-center .v { font-size: clamp(24px, 6.5vw, 32px); font-weight: var(--ha-font-weight-normal);
+                    line-height: var(--ha-line-height-condensed); margin-top: var(--ha-space-2);
+                    font-variant-numeric: tabular-nums; }
+
+  /* Sensor-row anatomy: icon left, bold name, value beneath it. */
+  .tile-row { display: flex; align-items: flex-start; gap: var(--ha-space-3); }
+  .tile-row .k { font-size: var(--ha-font-size-l); font-weight: var(--ha-font-weight-bold);
+                 line-height: var(--ha-line-height-condensed); }
+  .tile-row .v { font-size: var(--ha-font-size-m); color: var(--secondary-text-color);
+                 margin-top: var(--ha-space-1); font-variant-numeric: tabular-nums; }
+
+  /* An IQAir band keeps one colour in both themes, like their AQI chip. */
+  #hero { position: relative; padding: clamp(20px, 5vw, 32px); text-align: center;
+          border-color: transparent;
+          background: var(--tone-bg); color: var(--tone-ink); }
+  #info { position: absolute; top: var(--ha-space-2); right: var(--ha-space-2);
+          display: grid; place-items: center; width: 40px; height: 40px;
+          border: 0; border-radius: 50%; background: transparent; color: inherit;
+          cursor: pointer; }
+  #info:hover { background: rgb(0 0 0 / .1); }
+  #info:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+  #info svg { width: 22px; height: 22px; fill: currentColor; opacity: .75; }
+
+  /* Native <dialog> gives the backdrop, Esc-to-close and focus trap for free. */
+  #scale::backdrop { background: rgb(0 0 0 / .45); }
+  #scale { border: 0; border-radius: var(--ha-border-radius-lg); padding: 0;
+           width: min(420px, calc(100vw - 32px)); max-height: 85vh; overflow: auto;
+           background: var(--card-background-color); color: var(--primary-text-color);
+           font-family: var(--ha-font-family-body); font-size: var(--ha-font-size-m); }
+  #scale header { display: flex; align-items: center; justify-content: space-between;
+                  gap: var(--ha-space-2); padding: var(--ha-space-4) var(--ha-space-4) 0; }
+  #scale h3 { margin: 0; font-size: var(--ha-font-size-xl);
+              font-weight: var(--ha-font-weight-normal); }
+  #scale form { margin: 0; }
+  #scale button { display: grid; place-items: center; width: 40px; height: 40px;
+                  border: 0; border-radius: 50%; background: transparent;
+                  color: var(--secondary-text-color); cursor: pointer; }
+  #scale button:hover { background: var(--primary-background-color); }
+  #scale button svg { width: 22px; height: 22px; fill: currentColor; }
+  #scale table { width: 100%; border-collapse: collapse; margin: var(--ha-space-3) 0; }
+  #scale th { text-align: left; font-size: var(--ha-font-size-s);
+              font-weight: var(--ha-font-weight-medium);
+              color: var(--secondary-text-color);
+              padding: 0 var(--ha-space-4) var(--ha-space-1); }
+  #scale th:last-child, #scale td:last-child { text-align: right; }
+  #scale td { padding: var(--ha-space-2) var(--ha-space-4);
+              border-top: 1px solid var(--divider-color);
+              font-variant-numeric: tabular-nums; }
+  #scale .band { display: flex; align-items: center; gap: var(--ha-space-2);
+                 font-weight: var(--ha-font-weight-medium); }
+  #scale .swatch { width: 14px; height: 14px; border-radius: 4px; flex: none; }
+  #scale p { margin: 0; padding: 0 var(--ha-space-4) var(--ha-space-4);
+             color: var(--secondary-text-color); font-size: var(--ha-font-size-s);
+             line-height: var(--ha-line-height-normal); }
+  #pm25 { font-size: clamp(52px, 18vw, 96px); font-weight: var(--ha-font-weight-bold);
+          line-height: 1; font-variant-numeric: tabular-nums; }
+  #unit { display: flex; justify-content: center; align-items: center; flex-wrap: wrap;
+          gap: var(--ha-space-2); margin-top: var(--ha-space-2);
+          font-size: clamp(13px, 3.5vw, 16px); }
+  /* The US AQI figure IQAir leads with, alongside the raw concentration. */
+  #aqi { font-weight: var(--ha-font-weight-bold); font-variant-numeric: tabular-nums;
+         background: rgb(0 0 0 / .13); border-radius: 9999px; padding: 2px 10px; }
+  #cat { font-size: clamp(14px, 3.8vw, 16px); font-weight: var(--ha-font-weight-bold);
+         margin-top: var(--ha-space-2); text-wrap: balance; }
+
+  #chartwrap { position: relative; }
+  /* pan-y keeps vertical page scrolling while horizontal drags read the chart */
+  #chart { width: 100%; height: clamp(180px, 32vw, 240px); display: block;
+           touch-action: pan-y; stroke: var(--chart-line-color); }
+  #dot { fill: var(--chart-line-color); }
+  #tip { position: absolute; pointer-events: none; transform: translate(-50%, -100%);
+         background: var(--primary-text-color); color: var(--card-background-color);
+         font-size: var(--ha-font-size-s); line-height: var(--ha-line-height-condensed);
+         padding: 6px 10px; border-radius: var(--ha-border-radius-lg); white-space: nowrap;
+         font-variant-numeric: tabular-nums; }
+  #tip b { display: block; font-size: var(--ha-font-size-m);
+           font-weight: var(--ha-font-weight-medium); }
+
+  iframe { display: block; width: 100%; height: clamp(300px, 55vh, 460px);
+           border: 1px solid var(--divider-color);
+           border-radius: var(--ha-border-radius-lg); }
+
+  /* ha-control-select: pill of segments, selected one filled */
+  .seg { display: flex; gap: var(--ha-space-1); margin-bottom: var(--ha-space-2);
+         background: var(--card-background-color); padding: var(--ha-space-1);
+         border: 1px solid var(--divider-color); border-radius: 9999px;
+         width: fit-content; max-width: 100%; flex-wrap: wrap; }
+  .seg button { border: 0; border-radius: 9999px; cursor: pointer;
+                padding: 6px var(--ha-space-4); background: transparent;
+                color: var(--secondary-text-color);
+                font: inherit; font-size: var(--ha-font-size-m); }
+  .seg button[aria-selected="true"] { background: var(--state-icon-color); color: #fff; }
+  .seg button:focus-visible { outline: 2px solid var(--state-icon-color); outline-offset: 2px; }
+  #stamp { font-size: var(--ha-font-size-s); color: var(--secondary-text-color);
+           text-align: center; margin: var(--ha-space-4) 0 0; }
+
+  /* Title left, language toggle hard right, baselines aligned. */
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between;
+            gap: var(--ha-space-3); }
+  .topbar h1 { flex: 1; min-width: 0; }
+  #lang { flex: none; margin-top: var(--ha-space-2); cursor: pointer;
+          padding: 6px var(--ha-space-3); border-radius: 9999px;
+          border: 1px solid var(--divider-color);
+          background: var(--card-background-color); color: var(--primary-text-color);
+          font: inherit; font-size: var(--ha-font-size-m);
+          font-weight: var(--ha-font-weight-medium); }
+  #lang:hover { background: var(--primary-background-color); }
+  #lang:focus-visible { outline: 2px solid var(--state-icon-color); outline-offset: 2px; }
+
+  /* Below 400px two sensor rows per line get too cramped for icon + name. */
+  @media (max-width: 400px) {
+    #secondary { grid-template-columns: 1fr; }
+  }
+
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1 id="heading"></h1>
+  <button id="lang"></button>
+</div>
+
+<div class="card" id="hero">
+  <button id="info"></button>
+  <div id="pm25">–</div>
+  <div id="unit"><span id="pm-unit"></span><span id="aqi" hidden></span></div>
+  <div id="cat"></div>
+</div>
+
+<dialog id="scale" aria-labelledby="scale-title">
+  <header>
+    <h3 id="scale-title"></h3>
+    <form method="dialog"><button id="scale-close"></button></form>
+  </header>
+  <table>
+    <thead>
+      <tr><th id="col-level"></th><th id="col-aqi"></th><th id="col-pm"></th></tr>
+    </thead>
+    <tbody id="scale-rows"></tbody>
+  </table>
+  <p id="scale-note"></p>
+</dialog>
+
+<h2 id="sec-particulates"></h2>
+<div class="row row-2" id="primary"></div>
+
+<h2 id="sec-sensor"></h2>
+<div class="row row-2" id="secondary"></div>
+
+<h2 id="sec-history"></h2>
+<div class="card" id="chartwrap">
+  <svg id="chart" role="img"></svg>
+  <div id="tip" hidden></div>
+</div>
+
+<h2 id="sec-map"></h2>
+<!-- Windy leads: it is the only one of the two that takes coordinates, so it is the
+     only one that can centre on the sensor. IQAir's embeddable map accepts no
+     parameters at all — it opens on their default extent and the viewer pans.
+     Labels and frame titles are filled from i18n; only the URLs live here. -->
+<div class="seg" id="maptabs" role="tablist">
+  <button role="tab" aria-selected="true" aria-controls="map" data-key="wind"
+    data-src="https://embed.windy.com/embed2.html?lat=45.308&lon=18.410&detailLat=45.308&detailLon=18.410&zoom=9&overlay=wind&marker=true&metricTemp=%C2%B0C"></button>
+  <button role="tab" aria-selected="false" aria-controls="map" data-key="iqair"
+    data-src="https://www.iqair.com/embeddable-map"></button>
+</div>
+<iframe id="map" loading="lazy"
+  src="https://embed.windy.com/embed2.html?lat=45.308&lon=18.410&detailLat=45.308&detailLon=18.410&zoom=9&overlay=wind&marker=true&metricTemp=%C2%B0C"></iframe>
+
+<p id="stamp"></p>
+
+<script type="module">
+import { aqi, usAqi, CATEGORIES } from "./aqi.js";
+import { niceMax } from "./scale.js";
+
+// Material Design Icons (Pictogrammers, Apache-2.0) — the same glyphs HA picks for
+// these device classes: mdi:molecule, mdi:heat-wave, mdi:thermometer, mdi:water-percent.
+const ICONS = {
+  molecule: "M7.27,10L9,7H14.42L15.58,5L15.5,4.5A1.5,1.5 0 0,1 17,3A1.5,1.5 0 0,1 18.5,4.5C18.5,5.21 18,5.81 17.33,5.96L16.37,7.63L17.73,10L18.59,8.5L18.5,8A1.5,1.5 0 0,1 20,6.5A1.5,1.5 0 0,1 21.5,8C21.5,8.71 21,9.3 20.35,9.46L18.89,12L20.62,15C21.39,15.07 22,15.71 22,16.5A1.5,1.5 0 0,1 20.5,18A1.5,1.5 0 0,1 19,16.5V16.24L17.73,14L16.37,16.37L17.33,18.04C18,18.19 18.5,18.79 18.5,19.5A1.5,1.5 0 0,1 17,21A1.5,1.5 0 0,1 15.5,19.5L15.58,19L14.42,17H10.58L9.42,19L9.5,19.5A1.5,1.5 0 0,1 8,21A1.5,1.5 0 0,1 6.5,19.5C6.5,18.79 7,18.19 7.67,18.04L8.63,16.37L4.38,9C3.61,8.93 3,8.29 3,7.5A1.5,1.5 0 0,1 4.5,6A1.5,1.5 0 0,1 6,7.5C6,7.59 6,7.68 6,7.76L7.27,10M10.15,9L8.42,12L10.15,15H14.85L16.58,12L14.85,9H10.15Z",
+  heatWave: "M8.5 4.5L5.4 9.5L8.5 14.7L5.2 20.5L3.4 19.6L6.1 14.7L3 9.5L6.7 3.6L8.5 4.5M14.7 4.4L11.6 9.5L14.7 14.5L11.4 20.3L9.6 19.4L12.3 14.5L9.2 9.5L12.9 3.5L14.7 4.4M21 4.4L17.9 9.5L21 14.5L17.7 20.3L15.9 19.4L18.6 14.5L15.5 9.5L19.2 3.5L21 4.4",
+  thermometer: "M15 13V5A3 3 0 0 0 9 5V13A5 5 0 1 0 15 13M12 4A1 1 0 0 1 13 5V8H11V5A1 1 0 0 1 12 4Z",
+  info: "M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z",
+  close: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
+  humidity: "M12,3.25C12,3.25 6,10 6,14C6,17.32 8.69,20 12,20A6,6 0 0,0 18,14C18,10 12,3.25 12,3.25M14.47,9.97L15.53,11.03L9.53,17.03L8.47,15.97M9.75,10A1.25,1.25 0 0,1 11,11.25A1.25,1.25 0 0,1 9.75,12.5A1.25,1.25 0 0,1 8.5,11.25A1.25,1.25 0 0,1 9.75,10M14.25,14.5A1.25,1.25 0 0,1 15.5,15.75A1.25,1.25 0 0,1 14.25,17A1.25,1.25 0 0,1 13,15.75A1.25,1.25 0 0,1 14.25,14.5Z",
+};
+
+const icon = (name) =>
+  `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[name]}"/></svg>`;
+
+const num = (v, digits = 1) =>
+  typeof v === "number" && Number.isFinite(v) ? v.toFixed(digits) : "—";
+
+// Croatian is the default; a viewer's choice is remembered per browser.
+const LANGS = ["hr", "en"];
+const STORED = "lang";
+const readLang = () => {
+  try {
+    const saved = localStorage.getItem(STORED);
+    return LANGS.includes(saved) ? saved : null;
+  } catch {
+    return null; // private window, or site data blocked
+  }
+};
+
+let lang = readLang() ?? LANGS[0];
+let t; // the loaded translation table
+let latest = null; // last /api/data payload, so switching language needs no refetch
+
+// "Updated {time}" — the only interpolation the strings need.
+const fill = (template, values) =>
+  template.replace(/\{(\w+)\}/g, (_, key) => values[key]);
+
+const setText = (id, text) => { document.getElementById(id).textContent = text; };
+
+// Entity set comes from air-quality-sensor.yaml: SPS30 particulates, SGP4x, SHT4x.
+// Names are keys into sensors.* in the translation files.
+const PRIMARY = [
+  ["pm10", "µg/m³", 1, "molecule"],
+  ["pm1", "µg/m³", 1, "molecule"],
+];
+const SECONDARY = [
+  ["voc", "", 0, "heatWave"],
+  ["nox", "", 0, "heatWave"],
+  ["temp", "°C", 1, "thermometer"],
+  ["hum", "%", 0, "humidity"],
+];
+
+const value = (now, key, unit, digits) =>
+  `${num(now?.[key], digits)}${unit ? ` ${unit}` : ""}`;
+
+const tiles = (now, list, shape) => list
+  .map(([key, unit, digits, glyph]) => (shape === "center"
+    ? `<div class="card tile-center">
+         ${icon(glyph)}
+         <div class="k">${t.sensors[key]}</div>
+         <div class="v">${value(now, key, unit, digits)}</div>
+       </div>`
+    : `<div class="card tile-row">
+         ${icon(glyph)}
+         <div>
+           <div class="k">${t.sensors[key]}</div>
+           <div class="v">${value(now, key, unit, digits)}</div>
+         </div>
+       </div>`))
+  .join("");
+
+// Static chrome. Runs on load and again on every language switch.
+function applyStrings() {
+  document.documentElement.lang = lang;
+  document.title = t.title;
+  setText("heading", t.heading);
+  document.getElementById("heading").append(
+    Object.assign(document.createElement("small"), { textContent: t.location }),
+  );
+  setText("pm-unit", t.pmUnit);
+  setText("sec-particulates", t.sections.particulates);
+  setText("sec-sensor", t.sections.sensor);
+  setText("sec-history", t.sections.history);
+  setText("sec-map", t.sections.map);
+
+  const langButton = document.getElementById("lang");
+  langButton.textContent = t.switch.label;
+  langButton.setAttribute("aria-label", t.switch.aria);
+
+  document.getElementById("info").setAttribute("aria-label", t.dialog.open);
+  setText("scale-title", t.dialog.title);
+  document.getElementById("scale-close").setAttribute("aria-label", t.dialog.close);
+  setText("col-level", t.dialog.colLevel);
+  setText("col-aqi", t.dialog.colAqi);
+  setText("col-pm", t.dialog.colPm);
+  setText("scale-note", t.dialog.note);
+  drawScaleRows();
+
+  svg.setAttribute("aria-label", t.chart.aria);
+  document.querySelectorAll("#maptabs button").forEach((tab) => {
+    tab.textContent = t.map[tab.dataset.key];
+    tab.dataset.title = t.map[`${tab.dataset.key}Title`];
+    if (tab.getAttribute("aria-selected") === "true") mapFrame.title = tab.dataset.title;
+  });
+  document.getElementById("maptabs").setAttribute("aria-label", t.map.aria);
+}
+
+function render({ now, history }) {
+  const cat = aqi(now?.pm25);
+  const hero = document.getElementById("hero");
+  hero.style.setProperty("--tone-bg", cat.bg);
+  hero.style.setProperty("--tone-ink", cat.ink);
+  setText("pm25", num(now?.pm25));
+  setText("cat", t.levels[cat.key]);
+
+  const index = usAqi(now?.pm25);
+  const chip = document.getElementById("aqi");
+  chip.textContent = index === null ? "" : fill(t.usAqi, { value: index });
+  chip.hidden = index === null;
+
+  document.getElementById("primary").innerHTML = tiles(now, PRIMARY, "center");
+  document.getElementById("secondary").innerHTML = tiles(now, SECONDARY, "row");
+
+  points = history.filter((p) => typeof p.pm25 === "number");
+  drawChart();
+
+  setText("stamp", history.length
+    ? fill(t.updated, { time: new Date(history.at(-1).h).toLocaleString(t.locale) })
+    : t.noReadings);
+}
+
+const svg = document.getElementById("chart");
+const tip = document.getElementById("tip");
+const H = 220;
+const PAD = { top: 26, right: 8, bottom: 26, left: 36 };
+
+let points = [];
+let plot = null; // { x(i), y(v), i(px), w, h }
+
+function drawChart() {
+  hideTip();
+  const W = svg.clientWidth || 560;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+  if (points.length < 2) {
+    plot = null;
+    svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="14" stroke="none"
+      fill="currentColor" opacity=".5">Not enough history yet</text>`;
+    return;
+  }
+
+  // Floor of 12 keeps a clean week from rendering as dramatic noise near zero.
+  const { step, top } = niceMax(Math.max(12, ...points.map((p) => p.pm25)));
+  const w = W - PAD.left - PAD.right;
+  const h = H - PAD.top - PAD.bottom;
+  const n = points.length;
+
+  plot = {
+    w,
+    h,
+    x: (i) => PAD.left + (i / (n - 1)) * w,
+    y: (v) => PAD.top + h - (v / top) * h,
+    i: (px) => Math.min(n - 1, Math.max(0, Math.round(((px - PAD.left) / w) * (n - 1)))),
+  };
+
+  const grid = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+    stroke="var(--chart-grid-color)" stroke-width="1"/>`;
+  const label = (x, y, text, anchor) => `<text x="${x}" y="${y}" text-anchor="${anchor}"
+    font-size="12" fill="var(--secondary-text-color)" stroke="none">${text}</text>`;
+
+  // Unit sits above the y axis, the way the HA history chart labels it.
+  let svgText = label(PAD.left - 4, 12, "µg/m³", "start");
+
+  for (let v = 0; v <= top + 1e-9; v += step) {
+    const y = plot.y(v);
+    svgText += grid(PAD.left, y, W - PAD.right, y)
+      + label(PAD.left - 8, y + 4, +v.toFixed(1), "end");
+  }
+
+  // Five dated ticks, each with a vertical gridline, as in the HA chart.
+  const every = Math.ceil((n - 1) / 4);
+  const fmt = { day: "numeric", month: "short" };
+  for (let i = 0; i < n; i += every) {
+    const x = plot.x(i);
+    svgText += grid(x, PAD.top, x, PAD.top + h)
+      + label(x, H - 8, new Date(points[i].h).toLocaleDateString(undefined, fmt), "middle");
+  }
+
+  // The polyline inherits `stroke` from #chart, which the dark media query swaps.
+  const line = points.map((p, i) => `${plot.x(i).toFixed(1)},${plot.y(p.pm25).toFixed(1)}`).join(" ");
+  svgText += `
+    <polyline points="${line}" fill="none"
+      stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <line id="guide" y1="${PAD.top}" y2="${PAD.top + h}" stroke="var(--secondary-text-color)"
+      opacity=".5" stroke-width="1" hidden/>
+    <circle id="dot" r="4" stroke="var(--card-background-color)" stroke-width="2" hidden/>`;
+  svg.innerHTML = svgText;
+}
+
+function hideTip() {
+  tip.hidden = true;
+  svg.querySelector("#guide")?.setAttribute("hidden", "");
+  svg.querySelector("#dot")?.setAttribute("hidden", "");
+}
+
+function showTip(event) {
+  if (!plot) return;
+  const rect = svg.getBoundingClientRect();
+  // viewBox units track CSS pixels, except in the instant between a resize and a redraw.
+  const px = (event.clientX - rect.left) * (svg.clientWidth / rect.width);
+  const point = points[plot.i(px)];
+  const x = plot.x(plot.i(px));
+  const y = plot.y(point.pm25);
+
+  const guide = svg.querySelector("#guide");
+  guide.removeAttribute("hidden");
+  guide.setAttribute("x1", x);
+  guide.setAttribute("x2", x);
+
+  const dot = svg.querySelector("#dot");
+  dot.removeAttribute("hidden");
+  dot.setAttribute("cx", x);
+  dot.setAttribute("cy", y);
+
+  tip.innerHTML = `<b>${point.pm25.toFixed(1)} µg/m³</b>${new Date(point.h)
+    .toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
+  tip.hidden = false;
+  // Clamp so the tooltip never hangs off either edge of the card.
+  const half = tip.offsetWidth / 2;
+  tip.style.left = `${Math.min(Math.max(x, half), svg.clientWidth - half)}px`;
+  tip.style.top = `${y - 10}px`;
+}
+
+// The legend is derived from CATEGORIES, so changing a breakpoint updates both the
+// hero colour and this table. Only the open-ended top band needs special casing.
+const scale = document.getElementById("scale");
+
+function drawScaleRows() {
+  document.getElementById("scale-rows").innerHTML = CATEGORIES
+    .map((band, i) => {
+      const pmLo = i === 0 ? 0 : Number((CATEGORIES[i - 1].max + 0.1).toFixed(1));
+      const open = !Number.isFinite(band.max);
+      return `<tr>
+        <td><span class="band"><span class="swatch" style="background:${band.bg}"></span>${t.levels[band.key]}</span></td>
+        <td>${open ? `${usAqi(pmLo)}+` : `${usAqi(pmLo)}–${usAqi(band.max)}`}</td>
+        <td>${open ? `${pmLo}+` : `${pmLo}–${band.max}`}</td>
+      </tr>`;
+    })
+    .join("");
+}
+
+document.getElementById("info").innerHTML = icon("info");
+document.getElementById("scale-close").innerHTML = icon("close");
+document.getElementById("info").addEventListener("click", () => scale.showModal());
+// A native dialog closes on Esc and on the close button; add click-outside.
+scale.addEventListener("click", (e) => { if (e.target === scale) scale.close(); });
+
+// Map layer tabs: swap the one iframe's src rather than loading both of them.
+const mapFrame = document.getElementById("map");
+document.querySelectorAll("#maptabs button").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    if (tab.getAttribute("aria-selected") === "true") return;
+    document.querySelectorAll("#maptabs button")
+      .forEach((other) => other.setAttribute("aria-selected", String(other === tab)));
+    mapFrame.title = tab.dataset.title;
+    mapFrame.src = tab.dataset.src;
+  });
+});
+
+svg.addEventListener("pointermove", showTip);
+svg.addEventListener("pointerdown", showTip);
+svg.addEventListener("pointerleave", hideTip);
+new ResizeObserver(drawChart).observe(svg);
+
+async function setLanguage(next) {
+  const res = await fetch(`i18n/${next}.json`);
+  if (!res.ok) throw new Error(`missing translation file i18n/${next}.json`);
+  t = await res.json();
+  lang = next;
+  try {
+    localStorage.setItem(STORED, next);
+  } catch { /* nothing to remember it with; the page still works */ }
+  applyStrings();
+  if (latest) render(latest);
+}
+
+document.getElementById("lang").addEventListener("click", () => {
+  setLanguage(LANGS.find((code) => code !== lang));
+});
+
+async function load() {
+  const res = await fetch("/api/data");
+  if (!res.ok) {
+    setText("cat", fill(t.apiError, { status: res.status }));
+    return;
+  }
+  latest = await res.json();
+  render(latest);
+}
+
+await setLanguage(lang);
+setText("cat", t.loading);
+load();
+setInterval(load, 300000);
+</script>
+</body>
+</html>

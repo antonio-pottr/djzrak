@@ -1,0 +1,60 @@
+{
+  "locale": "hr-HR",
+  "title": "Kvaliteta zraka — Đakovo",
+  "heading": "Kvaliteta zraka na otvorenom",
+  "location": "Đakovo, Hrvatska",
+  "loading": "Učitavanje…",
+  "apiError": "Greška poslužitelja {status}",
+  "pmUnit": "µg/m³ PM2.5",
+  "usAqi": "US AQI {value}",
+  "updated": "Ažurirano {time}",
+  "noReadings": "Još nema mjerenja",
+  "switch": {
+    "label": "EN",
+    "aria": "Prebaci na engleski"
+  },
+  "sections": {
+    "particulates": "Čestice",
+    "sensor": "Vanjski senzor",
+    "history": "Povijest PM2.5",
+    "map": "Kvaliteta zraka u regiji"
+  },
+  "sensors": {
+    "pm10": "PM10",
+    "pm1": "PM1.0",
+    "voc": "VOC indeks",
+    "nox": "NOx indeks",
+    "temp": "Temperatura",
+    "hum": "Vlažnost"
+  },
+  "levels": {
+    "good": "Dobro",
+    "moderate": "Umjereno",
+    "sensitive": "Nezdravo za osjetljive skupine",
+    "unhealthy": "Nezdravo",
+    "veryUnhealthy": "Vrlo nezdravo",
+    "hazardous": "Opasno",
+    "noData": "Nema podataka"
+  },
+  "chart": {
+    "aria": "Prosječne satne vrijednosti PM2.5 u posljednjih 7 dana",
+    "empty": "Još nema dovoljno povijesti",
+    "unit": "µg/m³"
+  },
+  "map": {
+    "aria": "Sloj karte",
+    "wind": "Vjetar",
+    "windTitle": "Windy animirana karta vjetra sa središtem u Đakovu",
+    "iqair": "IQAir stanice",
+    "iqairTitle": "IQAir karta mjernih stanica kvalitete zraka"
+  },
+  "dialog": {
+    "open": "Što znače razine kvalitete zraka",
+    "title": "Razine kvalitete zraka",
+    "close": "Zatvori",
+    "colLevel": "Razina",
+    "colAqi": "US AQI",
+    "colPm": "PM2.5 µg/m³",
+    "note": "Razine slijede US EPA AQI za PM2.5, revizija iz svibnja 2024. — istu ljestvicu koristi i IQAir. Veliki broj na ovoj stranici je izmjerena koncentracija u µg/m³, ono što prikazuje IQAir karta stanica; oznaka uz njega je ta koncentracija pretvorena u US AQI indeks, ono što prikazuju IQAir Earth i njihove stranice gradova."
+  }
+}

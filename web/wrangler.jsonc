@@ -1,0 +1,11 @@
+{
+  "name": "air",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  // main + assets.directory: static files win for matching paths, the Worker gets the rest.
+  "assets": { "directory": "./public" },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "air", "database_id": "PASTE_ID_FROM_D1_CREATE" }
+  ],
+  "observability": { "enabled": true }
+}

@@ -1,0 +1,7 @@
+secrets.yaml
+.esphome/
+.venv/
+.env
+node_modules/
+.wrangler/
+.dev.vars

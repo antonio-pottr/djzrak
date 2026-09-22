@@ -1,0 +1,115 @@
+esphome:
+  name: bedroom-air-quality-sensor
+  friendly_name: Bedroom Air Quality Sensor
+
+esp32:
+  board: esp32-c6-devkitm-1
+  variant: esp32c6
+  framework:
+    type: esp-idf
+
+logger:
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Bedroom Air Quality Fallback"
+    password: !secret ota_password
+
+captive_portal:
+
+# ponytail: same C6 mini default I2C pair as air-quality-sensor.yaml, change if wired elsewhere
+i2c:
+  sda: GPIO6
+  scl: GPIO7
+  scan: true
+
+sensor:
+  # SCD4x doubles as the temp/humidity source for SGP41 compensation, so no SHT4x here
+  - platform: scd4x
+    co2:
+      name: "CO2"
+      id: co2
+      on_value:
+        - script.execute: update_led
+    temperature:
+      name: "Temperature"
+      id: temp
+    humidity:
+      name: "Humidity"
+      id: hum
+    update_interval: 60s
+
+  - platform: sgp4x
+    voc:
+      name: "VOC Index"
+    nox:
+      name: "NOx Index"
+      id: nox
+      force_update: true
+      on_value:
+        - script.execute: update_led
+    compensation:
+      temperature_source: temp
+      humidity_source: hum
+    store_baseline: true
+    update_interval: 60s
+
+  - platform: sps30
+    pm_1_0:
+      name: "PM1.0"
+    pm_2_5:
+      name: "PM2.5"
+      id: pm25
+      on_value:
+        - script.execute: update_led
+    pm_4_0:
+      name: "PM4.0"
+    pm_10_0:
+      name: "PM10"
+    pm_size:
+      name: "Typical Particle Size"
+    update_interval: 60s
+
+# PM2.5 drives the US EPA AQI color (May 2024 breakpoints) and outranks the rest.
+# Once PM is Good, CO2 and then NOx get the LED; all three clear means off.
+# Tested descending so an unavailable (NaN) reading fails every comparison and
+# falls through to the next indicator instead of matching the Hazardous branch.
+script:
+  - id: update_led
+    then:
+      - lambda: |-
+          float pm = id(pm25).state;
+          auto call = id(led).turn_on();
+          call.set_brightness(0.05);
+          if      (pm > 225.4)        call.set_rgb(0.494, 0.000, 0.137);  // Hazardous       #7E0023
+          else if (pm > 125.4)        call.set_rgb(0.561, 0.247, 0.592);  // Very unhealthy  #8F3F97
+          else if (pm >  55.4)        call.set_rgb(1.000, 0.000, 0.000);  // Unhealthy       #FF0000
+          else if (pm >  35.4)        call.set_rgb(1.000, 0.494, 0.000);  // Sensitive grps  #FF7E00
+          else if (pm >   9.0)        call.set_rgb(1.000, 1.000, 0.000);  // Moderate        #FFFF00
+          else if (id(co2).state > 1000) call.set_rgb(1.000, 1.000, 0.000);  // CO2 high  yellow
+          else if (id(nox).state > 1)    call.set_rgb(0.000, 0.894, 0.000);  // NOx high  green
+          else { id(led).turn_off().perform(); return; }
+          call.perform();
+
+# ponytail: GPIO8 is the onboard WS2812 on most C6 mini boards, change pin if yours differs
+light:
+  - platform: esp32_rmt_led_strip
+    id: led
+    name: "Status LED"
+    pin: GPIO8
+    chipset: WS2812
+    rgb_order: GRB
+    num_leds: 1
+    restore_mode: ALWAYS_OFF
+    # gamma correction skews orange toward red, which defeats the point of AQI colors
+    gamma_correct: 1.0

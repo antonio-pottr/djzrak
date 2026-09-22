@@ -1,0 +1,60 @@
+{
+  "locale": "en-GB",
+  "title": "Air Quality — Đakovo",
+  "heading": "Outdoor air quality",
+  "location": "Đakovo, Croatia",
+  "loading": "Loading…",
+  "apiError": "API error {status}",
+  "pmUnit": "µg/m³ PM2.5",
+  "usAqi": "US AQI {value}",
+  "updated": "Updated {time}",
+  "noReadings": "No readings yet",
+  "switch": {
+    "label": "HR",
+    "aria": "Switch to Croatian"
+  },
+  "sections": {
+    "particulates": "Particulates",
+    "sensor": "Outdoor sensor",
+    "history": "PM2.5 history",
+    "map": "Regional air quality"
+  },
+  "sensors": {
+    "pm10": "PM10",
+    "pm1": "PM1.0",
+    "voc": "VOC Index",
+    "nox": "NOx Index",
+    "temp": "Temperature",
+    "hum": "Humidity"
+  },
+  "levels": {
+    "good": "Good",
+    "moderate": "Moderate",
+    "sensitive": "Unhealthy for sensitive groups",
+    "unhealthy": "Unhealthy",
+    "veryUnhealthy": "Very unhealthy",
+    "hazardous": "Hazardous",
+    "noData": "No data"
+  },
+  "chart": {
+    "aria": "PM2.5 hourly average over the last 7 days",
+    "empty": "Not enough history yet",
+    "unit": "µg/m³"
+  },
+  "map": {
+    "aria": "Map layer",
+    "wind": "Wind",
+    "windTitle": "Windy animated wind map centred on Đakovo",
+    "iqair": "IQAir stations",
+    "iqairTitle": "IQAir air quality station map"
+  },
+  "dialog": {
+    "open": "What the air quality levels mean",
+    "title": "Air quality levels",
+    "close": "Close",
+    "colLevel": "Level",
+    "colAqi": "US AQI",
+    "colPm": "PM2.5 µg/m³",
+    "note": "Levels follow the US EPA AQI for PM2.5, May 2024 revision — the same scale IQAir uses. The big number on this page is the raw concentration in µg/m³, which is what IQAir's station map plots; the chip beside it is that concentration converted to the US AQI index, which is what IQAir Earth and their city pages show."
+  }
+}
