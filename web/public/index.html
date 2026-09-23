@@ -422,8 +422,8 @@ function drawChart() {
     return;
   }
 
-  // +2 µg/m³ headroom so the week's peak never touches the top edge.
-  const { step, top } = niceMax(Math.max(...points.map((p) => p.pm25)) + 2);
+  // +1 µg/m³ headroom so the week's peak never touches the top edge.
+  const { step, top } = niceMax(Math.max(...points.map((p) => p.pm25)) + 1);
   const w = W - PAD.left - PAD.right;
   const h = H - PAD.top - PAD.bottom;
   const n = points.length;
