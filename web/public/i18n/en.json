@@ -6,7 +6,7 @@
   "loading": "Loading…",
   "apiError": "API error {status}",
   "netError": "Cannot reach the server",
-  "retry": "Try again",
+  "refresh": "Refresh data",
   "pmUnit": "µg/m³ PM2.5",
   "usAqi": "US AQI {value}",
   "updated": "Updated {time}",
