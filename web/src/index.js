@@ -1,9 +1,7 @@
-// Routing only: parse the request, call a service, shape the response.
-import { SENSORS, insertReading, latestReading } from "./db.js";
-import { readHistory, refreshHistories } from "./history.js";
+// Routing only: parse the request, call db.js, shape the response.
+import { SENSORS, insertReading, latestReading, sensorHistory } from "./db.js";
 
-// A refresh is the only way to get new data, so it must never come from the browser's
-// cache. Edge-side caching is unaffected: KV keeps its own cacheTtl.
+// A refresh is the only way to get new data, so it must never come from the browser's cache.
 const CACHE = { "cache-control": "no-store" };
 
 export default {
@@ -15,8 +13,8 @@ export default {
         return new Response("unauthorized", { status: 401 });
 
       const body = await req.json().catch(() => null);
-      // HA publishes the string "unavailable" when a sensor drops out; that must not
-      // reach the table, or the graph gets a hole that reads as a real zero.
+      // A dead chip omits its key, which json_extract reads as absent. A payload with no
+      // usable pm25 at all is rejected outright, or the graph gets a hole reading as a zero.
       if (!body || typeof body.pm25 !== "number" || !Number.isFinite(body.pm25))
         return new Response("bad payload: pm25 must be a finite number", { status: 400 });
 
@@ -27,7 +25,7 @@ export default {
     if (url.pathname === "/api/data") {
       const [latest, history] = await Promise.all([
         latestReading(env),
-        readHistory(env, "pm25"),
+        sensorHistory(env, "pm25"),
       ]);
       return Response.json({ ...latest, history }, { headers: CACHE });
     }
@@ -36,15 +34,9 @@ export default {
       const sensor = url.searchParams.get("sensor");
       if (!SENSORS.includes(sensor))
         return new Response(`unknown sensor: use one of ${SENSORS.join(", ")}`, { status: 400 });
-      return Response.json(await readHistory(env, sensor), { headers: CACHE });
+      return Response.json(await sensorHistory(env, sensor), { headers: CACHE });
     }
 
     return new Response("not found", { status: 404 });
-  },
-
-  // triggers.crons in wrangler.jsonc. Rebuilding here rather than on ingest keeps the write
-  // budget tied to the schedule instead of to how often the sensor happens to push.
-  async scheduled(event, env) {
-    await refreshHistories(env, event.scheduledTime);
   },
 };

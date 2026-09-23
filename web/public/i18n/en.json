@@ -19,7 +19,7 @@
     "particulates": "Particulates",
     "sensor": "Outdoor sensor",
     "history": "{name} history",
-    "historyNote": "Averaged in 5-minute intervals",
+    "historyNote": "A reading every 5 minutes",
     "map": "Regional wind"
   },
   "sensors": {
@@ -41,7 +41,7 @@
     "noData": "No data"
   },
   "chart": {
-    "aria": "{name} 5-minute average over the last 7 days",
+    "aria": "{name} sampled every 5 minutes over the last 7 days",
     "empty": "Not enough history yet",
     "open": "Show {name} history"
   },

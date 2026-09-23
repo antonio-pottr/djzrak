@@ -82,6 +82,10 @@ assert.ok(contrast("#4269d0", "#ffffff") >= 3, "chart line on a light card");
 assert.ok(contrast("#97bbf5", "#1c1c1c") >= 3, "chart line on a dark card");
 assert.ok(contrast("#5f6368", "#ffffff") >= 4.5, "secondary text on a light card");
 assert.ok(contrast("#9b9b9b", "#1c1c1c") >= 4.5, "secondary text on a dark card");
+// The history note and the retry button sit on the page, not on a card, and #retry borrows
+// the same colour for its border — which WCAG 1.4.11 holds to 3:1 as a control boundary.
+assert.ok(contrast("#5f6368", "#f7f7f8") >= 4.5, "secondary text on the light page");
+assert.ok(contrast("#9b9b9b", "#111111") >= 4.5, "secondary text on the dark page");
 
 // Translations. A key present in one file and missing from the other renders as
 // "undefined" on the page, so compare the full nested key sets rather than eyeballing.
@@ -145,41 +149,29 @@ assert.deepEqual(
   "index.html chart buttons and src/db.js SENSORS do not have the same sensor set",
 );
 
-// Two free-tier caps, and the inputs to both live outside this file: the cron sets how many
-// times a day the table is scanned, the sensor's push interval sets how many rows each scan
-// covers. Read them back rather than restating them, so editing either fails here.
-const { sensorsDueAt } = await import("./src/history.js");
+// D1 bills the temp b-tree that a GROUP BY on an expression builds: twice the rows for the
+// same answer, which is what put an earlier version of this 16% over the 5M/day cap. The rows
+// are already one per bucket, so the chart query must stay a plain range scan.
+assert.doesNotMatch(workerSrc.replace(/\/\/.*$/gm, ""), /GROUP BY/i,
+  "src/db.js: a GROUP BY doubles billed rows_read — keep the chart a plain range scan");
 
-const cron = readFileSync("./wrangler.jsonc", "utf8").match(/"crons":\s*\[\s*"([^"]+)"/);
-assert.ok(cron, "wrangler.jsonc: no triggers.crons, so scheduled() never runs");
-const every = cron[1].match(/^\*\/(\d+) \* \* \* \*$/);
-assert.ok(every, `the budget below assumes an every-N-minutes cron, got "${cron[1]}"`);
-const STEP = Number(every[1]);
+const { BUCKET, WEEK } = await import("./src/db.js");
+const ROWS = WEEK / BUCKET; // one row per bucket, a week deep
 
+// A page view costs the chart scan plus the single latest row, and nothing else.
+const views = Math.floor(5e6 / (ROWS + 1));
+assert.ok(views >= 2000,
+  `${ROWS + 1} D1 rows a view leaves only ${views} page views a day under the 5M cap`);
+
+// Pushes overwrite their own bucket, so the push rate sets rows WRITTEN, not rows read.
 const sensorYaml = readFileSync("../air-quality-sensor.yaml", "utf8");
-// The SPS30's pm_2_5 is what fires push_reading, so its update_interval sets the row count.
+// The SPS30's pm_2_5 is what fires push_reading, so its update_interval sets the write rate.
 const sps30 = sensorYaml.slice(sensorYaml.indexOf("platform: sps30"));
 const push = sps30.match(/update_interval:\s*(\d+)s/);
 assert.ok(push, "air-quality-sensor.yaml: no update_interval under platform: sps30");
-const PERIOD = Number(push[1]) * 1000;
-
-let writes = 0;
-let scans = 0;
-for (let m = 0; m < 24 * 60; m += STEP) {
-  writes += sensorsDueAt(Date.UTC(2026, 0, 1, 0, m)).length;
-  scans++;
-}
-const rows = scans * (7 * 864e5 / PERIOD); // every refresh scans the whole week
-
-assert.ok(writes <= 1000,
-  `a ${STEP}-minute cron writes ${writes} KV keys a day, over the 1,000 cap`);
-assert.ok(rows <= 5e6, `a ${STEP}-minute cron over a ${PERIOD / 1000}s push interval reads `
-  + `${(rows / 1e6).toFixed(2)}M D1 rows a day, over 5M`);
-
-// Only the half hour pulls the six sensors that sit behind a chart button.
-assert.deepEqual(sensorsDueAt(Date.UTC(2026, 0, 1, 12, 30)).slice().sort(),
-  workerSensors.slice().sort());
-assert.deepEqual(sensorsDueAt(Date.UTC(2026, 0, 1, 12, 5)), ["pm25"]);
+const written = 864e5 / (Number(push[1]) * 1000);
+assert.ok(written <= 1e5,
+  `a ${push[1]}s push interval writes ${written} D1 rows a day, over the 100k cap`);
 
 console.log(
-  `aqi + scale + contrast + i18n (${LANGS.join(", ")}) + sensor whitelist + kv budget ok`);
+  `aqi + scale + contrast + i18n (${LANGS.join(", ")}) + sensor whitelist + d1 budget ok`);

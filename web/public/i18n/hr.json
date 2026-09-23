@@ -19,7 +19,7 @@
     "particulates": "Čestice",
     "sensor": "Vanjski senzor",
     "history": "Povijest: {name}",
-    "historyNote": "Prosjeci u intervalima od 5 minuta",
+    "historyNote": "Mjerenja svakih 5 minuta",
     "map": "Vjetar u regiji"
   },
   "sensors": {
@@ -41,7 +41,7 @@
     "noData": "Nema podataka"
   },
   "chart": {
-    "aria": "Prosječne 5-minutne vrijednosti {name} u posljednjih 7 dana",
+    "aria": "Mjerenja {name} svakih 5 minuta u posljednjih 7 dana",
     "empty": "Još nema dovoljno povijesti",
     "open": "Prikaži povijest: {name}"
   },

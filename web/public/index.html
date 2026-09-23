@@ -81,9 +81,8 @@
   h2 { font-size: var(--ha-font-size-l); font-weight: var(--ha-font-weight-normal);
        line-height: var(--ha-line-height-condensed);
        margin: var(--ha-space-6) 0 var(--ha-space-3); }
-  /* Only shown when a load failed. Nothing retries on its own, so this is the way back. */
   #retry { margin-top: var(--ha-space-3); padding: var(--ha-space-2) var(--ha-space-4);
-           border: 1px solid var(--divider-color); border-radius: 999px;
+           border: 1px solid var(--secondary-text-color); border-radius: 999px;
            background: var(--card-background-color); color: var(--primary-text-color);
            font: inherit; cursor: pointer; }
   /* Sits tight under its h2, so it reads as part of the heading, not the chart. */
@@ -241,7 +240,7 @@
   <button id="info"></button>
   <div id="pm25">–</div>
   <div id="unit"><span id="pm-unit"></span><span id="aqi" hidden></span></div>
-  <div id="cat"></div>
+  <div id="cat" aria-live="polite"></div>
   <div id="stamp"></div>
   <button id="retry" hidden></button>
 </div>
@@ -322,6 +321,14 @@ const readLang = () => {
 let lang = readLang() ?? LANGS[0];
 let t; // the loaded translation table
 let latest = null; // last /api/data payload, so switching language needs no refetch
+// Why the last load failed, kept because #cat belongs to render() and a failed load never
+// reaches it — without this, switching language leaves the error in the previous language.
+let failure = null; // { net: true } | { status: number }
+
+const showFailure = () => {
+  setText("cat", failure.net ? t.netError : fill(t.apiError, { status: failure.status }));
+  document.getElementById("retry").hidden = false;
+};
 
 // "Updated {time}" — the only interpolation the strings need.
 const fill = (template, values) =>
@@ -620,7 +627,10 @@ async function setLanguage(next) {
     localStorage.setItem(STORED, next);
   } catch { /* nothing to remember it with; the page still works */ }
   applyStrings();
-  if (latest) render(latest);
+  // #cat holds whichever of the three states we are in, and only render() owns the third.
+  if (failure) showFailure();
+  else if (latest) render(latest);
+  else setText("cat", t.loading);
 }
 
 document.getElementById("lang").addEventListener("click", () => {
@@ -629,24 +639,33 @@ document.getElementById("lang").addEventListener("click", () => {
 
 async function load() {
   const retry = document.getElementById("retry");
-  retry.hidden = true;
+  // Disabled rather than hidden, so a second click cannot land and the focus ring stays put.
+  retry.disabled = true;
+  failure = null;
+  setText("cat", t.loading);
+
+  let res = null;
   try {
-    const res = await fetch("/api/data");
-    if (!res.ok) throw new Error(fill(t.apiError, { status: res.status }));
-    latest = await res.json();
-    render(latest);
+    res = await fetch("/api/data");
+    if (!res.ok) failure = { status: res.status };
+    else latest = await res.json();
   } catch (err) {
-    // Nothing polls any more, so a failed load stays failed until someone asks again.
-    // A thrown fetch never reached the Worker at all, which is a different thing to say.
-    setText("cat", err instanceof TypeError ? t.netError : err.message);
-    retry.hidden = false;
+    console.error(err);
+    // No response object means the request never landed: offline, DNS, CORS, CSP. A response
+    // we then failed to parse did land, so that is the Worker's problem, not the network's.
+    failure = res ? { status: res.status } : { net: true };
   }
+
+  retry.disabled = false;
+  if (failure) return showFailure();
+  retry.hidden = true;
+  // Outside every guard: a bug in here must throw for real, not read as an outage.
+  render(latest);
 }
 
 document.getElementById("retry").addEventListener("click", load);
 
 await setLanguage(lang);
-setText("cat", t.loading);
 // No polling: the page shows when its reading was taken, and a refresh fetches a new one.
 load();
 </script>
