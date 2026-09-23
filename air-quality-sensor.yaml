@@ -2,6 +2,11 @@ esphome:
   name: air-quality-sensor
   friendly_name: Air Quality Sensor
 
+# "Bearer" is transport detail, so it lives here rather than inside the secret's
+# value — secrets.yaml holds the bare token from `wrangler secret put INGEST_TOKEN`.
+substitutions:
+  ingest_token: !secret ingest_token
+
 esp32:
   board: esp32-c6-devkitm-1
   variant: esp32c6
@@ -33,6 +38,13 @@ i2c:
   scl: GPIO7
   scan: true
 
+http_request:
+  # verify_ssl stays on here, unlike the old Sensor.Community push: that one carried
+  # only public air data, this one carries the ingest token in a header. esp-idf ships
+  # a CA bundle, so no ca_certificate_path is needed for a Cloudflare certificate.
+  verify_ssl: true
+  timeout: 10s
+
 sensor:
   - platform: sht4x
     temperature:
@@ -46,8 +58,10 @@ sensor:
   - platform: sgp4x
     voc:
       name: "VOC Index"
+      id: voc
     nox:
       name: "NOx Index"
+      id: nox
       force_update: true
     compensation:
       temperature_source: temp
@@ -58,21 +72,55 @@ sensor:
   - platform: sps30
     pm_1_0:
       name: "PM1.0"
+      id: pm1
     pm_2_5:
       name: "PM2.5"
       id: pm25
       on_value:
         - script.execute: update_led
+        - script.execute: push_reading
     pm_4_0:
       name: "PM4.0"
     pm_10_0:
       name: "PM10"
+      id: pm10
     pm_size:
       name: "Typical Particle Size"
     update_interval: 60s
 
-# US EPA AQI category colors, driven by PM2.5 (breakpoints per the May 2024 revision)
+
 script:
+  # Fires from pm_2_5's on_value, the same moment the reading is published to Home
+  # Assistant, so the page and HA never disagree. Straight to the Worker: HA is not
+  # in the path, and rest_command has no UI.
+  # mode: single drops an overlapping run rather than queueing, so a slow or failed
+  # POST cannot pile up behind the 60s sensor cycle.
+  - id: push_reading
+    mode: single
+    then:
+      - if:
+          condition:
+            lambda: "return !std::isnan(id(pm25).state);"
+          then:
+            - http_request.post:
+                url: https://air.aloncar-mail.workers.dev/ingest
+                capture_response: false
+                request_headers:
+                  Content-Type: application/json
+                  Authorization: "Bearer ${ingest_token}"
+                json: |-
+                  auto add = [&](const char *key, float v) {
+                    if (!std::isnan(v)) root[key] = v;
+                  };
+                  add("pm25", id(pm25).state);
+                  add("pm10", id(pm10).state);
+                  add("pm1", id(pm1).state);
+                  add("voc", id(voc).state);
+                  add("nox", id(nox).state);
+                  add("temp", id(temp).state);
+                  add("hum", id(hum).state);
+
+# US EPA AQI category colors, driven by PM2.5 (breakpoints per the May 2024 revision)
   - id: update_led
     then:
       - lambda: |-

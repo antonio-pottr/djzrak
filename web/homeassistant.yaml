@@ -1,10 +1,22 @@
-# Paste into Home Assistant's configuration.yaml (or split-config equivalents),
-# then add `air_ingest_token: "Bearer <the same secret>"` to HA's secrets.yaml.
-# HA only ever makes an outbound POST here, so nothing about this exposes HA itself.
-#
+# Home Assistant side of the Đakovo air quality page. Two pastes, two destinations.
 # Entity IDs come from air-quality-sensor.yaml (SHT4x + SGP4x + SPS30), which is what
 # the outdoor unit actually runs. No pressure sensor on that board.
+#
+# HA only ever makes an outbound POST, so nothing here exposes your HA instance.
 
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# PASTE 1 of 2  →  /config/secrets.yaml
+# ─────────────────────────────────────────────────────────────────────────────────
+# The word Bearer, a space, then the INGEST_TOKEN you set with `wrangler secret put`.
+# Without the "Bearer " prefix the Worker answers 401.
+#
+#   air_ingest_token: "Bearer your-token-here"
+
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# PASTE 2 of 2  →  /config/configuration.yaml
+# ─────────────────────────────────────────────────────────────────────────────────
 rest_command:
   push_air:
     url: https://air.aloncar-mail.workers.dev/ingest
@@ -24,13 +36,22 @@ rest_command:
           'hum':  states('sensor.air_quality_sensor_humidity')    | float(default=none)
          } | tojson }}
 
-automation:
-  - alias: Push air data to Cloudflare
-    triggers:
-      - trigger: time_pattern
-        minutes: "/5"
-    conditions:
-      - condition: template
-        value_template: "{{ has_value('sensor.air_quality_sensor_pm2_5') }}"
-    actions:
-      - action: rest_command.push_air
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# PASTE 3 of 2  →  Settings › Automations › Create automation › Edit in YAML
+# ─────────────────────────────────────────────────────────────────────────────────
+# Do NOT put this in configuration.yaml. A default HA config already has
+# `automation: !include automations.yaml`, and a second `automation:` key is a
+# duplicate mapping key — HA refuses to start. Creating it in the UI sidesteps that.
+# Paste everything below the dashes, without the leading "- ".
+#
+# - alias: Push air data to Cloudflare
+#   triggers:
+#     - trigger: time_pattern
+#       minutes: "/5"
+#   conditions:
+#     - condition: template
+#       value_template: "{{ has_value('sensor.air_quality_sensor_pm2_5') }}"
+#   actions:
+#     - action: rest_command.push_air
+#   mode: single
