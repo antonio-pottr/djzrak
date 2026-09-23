@@ -17,7 +17,7 @@
     "particulates": "Čestice",
     "sensor": "Vanjski senzor",
     "history": "Povijest PM2.5",
-    "map": "Kvaliteta zraka u regiji"
+    "map": "Vjetar u regiji"
   },
   "sensors": {
     "pm10": "PM10",
@@ -37,16 +37,12 @@
     "noData": "Nema podataka"
   },
   "chart": {
-    "aria": "Prosječne satne vrijednosti PM2.5 u posljednjih 7 dana",
+    "aria": "Prosječne 5-minutne vrijednosti PM2.5 u posljednjih 7 dana",
     "empty": "Još nema dovoljno povijesti",
     "unit": "µg/m³"
   },
   "map": {
-    "aria": "Sloj karte",
-    "wind": "Vjetar",
-    "windTitle": "Windy animirana karta vjetra sa središtem u Đakovu",
-    "iqair": "IQAir stanice",
-    "iqairTitle": "IQAir karta mjernih stanica kvalitete zraka"
+    "title": "Windy animirana karta vjetra sa središtem u Đakovu"
   },
   "dialog": {
     "open": "Što znače razine kvalitete zraka",
@@ -56,5 +52,14 @@
     "colAqi": "US AQI",
     "colPm": "PM2.5 µg/m³",
     "note": "Razine slijede US EPA AQI za PM2.5, revizija iz svibnja 2024. — istu ljestvicu koristi i IQAir. Veliki broj na ovoj stranici je izmjerena koncentracija u µg/m³, ono što prikazuje IQAir karta stanica; oznaka uz njega je ta koncentracija pretvorena u US AQI indeks, ono što prikazuju IQAir Earth i njihove stranice gradova."
+  },
+  "about": {
+    "open": "Što znači {name}",
+    "pm10": "Masa svih čestica do 10 µm po kubnom metru zraka: prašina, pelud, čađa, prašina s ceste i gradilišta. Mjeri je Sensirion SPS30, koji broji čestice u laserskom snopu i pretvara broj u masu. SPS30 izravno vidi čestice manje od 10 µm, a najkrupnije procjenjuje, pa je točnost PM10 ±25 µg/m³ ispod 100 µg/m³ i ±25 % iznad.",
+    "pm1": "Masa čestica manjih od 1 µm po kubnom metru zraka. To je uglavnom dim iz peći na drva, prometa i požara, a te čestice prodiru najdublje u pluća. Mjeri ih laserski senzor Sensirion SPS30, s preciznošću ±10 µg/m³ ispod 100 µg/m³ i ±10 % iznad.",
+    "voc": "Hlapljivi organski spojevi (otapala, dim, kuhanje, ispušni plinovi) sa Sensirion SGP41 senzora plina. Ovo je indeks od 1 do 500, a ne koncentracija. Senzor uči svoj prosjek iz proteklih sati i označava ga sa 100. Ispod 100 zrak je čišći nego inače, a iznad 100 lošiji (200 znači otprilike dvostruko više nego inače). Pokazuje promjenu kroz vrijeme i ne može se uspoređivati među senzorima.",
+    "nox": "Dušikovi oksidi (NO, NO₂) od izgaranja: promet, grijanje, plinski uređaji. Daje ih isti Sensirion SGP41 senzor kao indeks od 1 do 500. Za razliku od VOC indeksa, ovdje je 1 uobičajeno, a sve iznad 1 znači plinove izgaranja iznad uobičajene razine. Pokazuje promjenu kroz vrijeme, a ne koncentraciju.",
+    "temp": "Temperatura zraka sa Sensirion SHT4x senzora, uobičajene točnosti ±0,2 °C. Isto očitanje služi za korekciju mjerenja plinova na SGP41. Položaj je bitan: izravno sunce ili topao zid podižu očitanje svakog termometra.",
+    "hum": "Relativna vlažnost s istog Sensirion SHT4x senzora, uobičajene točnosti ±1,8 %RH. Služi i za korekciju mjerenja plinova. Po magli ili iznad otprilike 85 % vlage kapljice vode mogu prikazati više čestica nego što ih zaista ima."
   }
 }

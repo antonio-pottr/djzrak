@@ -25,17 +25,18 @@ export default {
 
     if (url.pathname === "/api/data") {
       const [now, history] = await env.DB.batch([
-        env.DB.prepare("SELECT data FROM readings ORDER BY ts DESC LIMIT 1"),
-        // Hourly averages: 168 points for a week. json_extract reads straight out of
-        // the blob, so adding a sensor never needs a migration.
+        env.DB.prepare("SELECT ts, data FROM readings ORDER BY ts DESC LIMIT 1"),
+        // 5-minute averages, matching HA's push cadence: ~2016 points for a week.
+        // json_extract reads straight out of the blob, so adding a sensor never needs a migration.
         env.DB.prepare(`
-          SELECT ts / 3600000 * 3600000 AS h,
+          SELECT ts / 300000 * 300000 AS ts,
                  ROUND(AVG(json_extract(data, '$.pm25')), 1) AS pm25
-          FROM readings WHERE ts > ? GROUP BY h ORDER BY h`).bind(Date.now() - WEEK),
+          FROM readings WHERE ts > ? GROUP BY 1 ORDER BY 1`).bind(Date.now() - WEEK),
       ]);
       return Response.json(
         {
           now: now.results.length ? JSON.parse(now.results[0].data) : null,
+          updated: now.results[0]?.ts ?? null,
           history: history.results,
         },
         { headers: { "cache-control": "public, max-age=60" } },

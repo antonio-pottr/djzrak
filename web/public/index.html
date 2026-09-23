@@ -121,36 +121,48 @@
   #info svg { width: 22px; height: 22px; fill: currentColor; opacity: .75; }
 
   /* Native <dialog> gives the backdrop, Esc-to-close and focus trap for free. */
-  #scale::backdrop { background: rgb(0 0 0 / .45); }
-  #scale { border: 0; border-radius: var(--ha-border-radius-lg); padding: 0;
+  dialog::backdrop { background: rgb(0 0 0 / .45); }
+  dialog { border: 0; border-radius: var(--ha-border-radius-lg); padding: 0;
            width: min(420px, calc(100vw - 32px)); max-height: 85vh; overflow: auto;
            background: var(--card-background-color); color: var(--primary-text-color);
            font-family: var(--ha-font-family-body); font-size: var(--ha-font-size-m); }
-  #scale header { display: flex; align-items: center; justify-content: space-between;
+  dialog header { display: flex; align-items: center; justify-content: space-between;
                   gap: var(--ha-space-2); padding: var(--ha-space-4) var(--ha-space-4) 0; }
-  #scale h3 { margin: 0; font-size: var(--ha-font-size-xl);
+  dialog h3 { margin: 0; font-size: var(--ha-font-size-xl);
               font-weight: var(--ha-font-weight-normal); }
-  #scale form { margin: 0; }
-  #scale button { display: grid; place-items: center; width: 40px; height: 40px;
+  dialog form { margin: 0; }
+  dialog button { display: grid; place-items: center; width: 40px; height: 40px;
                   border: 0; border-radius: 50%; background: transparent;
                   color: var(--secondary-text-color); cursor: pointer; }
-  #scale button:hover { background: var(--primary-background-color); }
-  #scale button svg { width: 22px; height: 22px; fill: currentColor; }
-  #scale table { width: 100%; border-collapse: collapse; margin: var(--ha-space-3) 0; }
-  #scale th { text-align: left; font-size: var(--ha-font-size-s);
+  dialog button:hover { background: var(--primary-background-color); }
+  dialog button svg { width: 22px; height: 22px; fill: currentColor; }
+  dialog table { width: 100%; border-collapse: collapse; margin: var(--ha-space-3) 0; }
+  dialog th { text-align: left; font-size: var(--ha-font-size-s);
               font-weight: var(--ha-font-weight-medium);
               color: var(--secondary-text-color);
               padding: 0 var(--ha-space-4) var(--ha-space-1); }
-  #scale th:last-child, #scale td:last-child { text-align: right; }
-  #scale td { padding: var(--ha-space-2) var(--ha-space-4);
+  dialog th:last-child, dialog td:last-child { text-align: right; }
+  dialog td { padding: var(--ha-space-2) var(--ha-space-4);
               border-top: 1px solid var(--divider-color);
               font-variant-numeric: tabular-nums; }
-  #scale .band { display: flex; align-items: center; gap: var(--ha-space-2);
+  dialog .band { display: flex; align-items: center; gap: var(--ha-space-2);
                  font-weight: var(--ha-font-weight-medium); }
-  #scale .swatch { width: 14px; height: 14px; border-radius: 4px; flex: none; }
-  #scale p { margin: 0; padding: 0 var(--ha-space-4) var(--ha-space-4);
+  dialog .swatch { width: 14px; height: 14px; border-radius: 4px; flex: none; }
+  dialog p { margin: 0; padding: 0 var(--ha-space-4) var(--ha-space-4);
              color: var(--secondary-text-color); font-size: var(--ha-font-size-s);
              line-height: var(--ha-line-height-normal); }
+  #about p { padding-top: var(--ha-space-3); }
+
+  /* Small (i) in each tile's corner, opening that sensor's explanation. */
+  .tile-center, .tile-row { position: relative; }
+  .tile-row { padding-right: 44px; }
+  .about { position: absolute; top: var(--ha-space-1); right: var(--ha-space-1);
+           display: grid; place-items: center; width: 36px; height: 36px;
+           border: 0; border-radius: 50%; background: transparent; cursor: pointer;
+           color: var(--secondary-text-color); }
+  .about:hover { background: var(--primary-background-color); }
+  .about:focus-visible { outline: 2px solid var(--state-icon-color); outline-offset: -4px; }
+  .about .icon { width: 20px; height: 20px; margin: 0; fill: currentColor; }
   #pm25 { font-size: clamp(52px, 18vw, 96px); font-weight: var(--ha-font-weight-bold);
           line-height: 1; font-variant-numeric: tabular-nums; }
   #unit { display: flex; justify-content: center; align-items: center; flex-wrap: wrap;
@@ -161,6 +173,8 @@
          background: rgb(0 0 0 / .13); border-radius: 9999px; padding: 2px 10px; }
   #cat { font-size: clamp(14px, 3.8vw, 16px); font-weight: var(--ha-font-weight-bold);
          margin-top: var(--ha-space-2); text-wrap: balance; }
+  #stamp { font-size: var(--ha-font-size-s); opacity: .8; margin-top: var(--ha-space-1);
+           font-variant-numeric: tabular-nums; }
 
   #chartwrap { position: relative; }
   /* pan-y keeps vertical page scrolling while horizontal drags read the chart */
@@ -179,19 +193,6 @@
            border: 1px solid var(--divider-color);
            border-radius: var(--ha-border-radius-lg); }
 
-  /* ha-control-select: pill of segments, selected one filled */
-  .seg { display: flex; gap: var(--ha-space-1); margin-bottom: var(--ha-space-2);
-         background: var(--card-background-color); padding: var(--ha-space-1);
-         border: 1px solid var(--divider-color); border-radius: 9999px;
-         width: fit-content; max-width: 100%; flex-wrap: wrap; }
-  .seg button { border: 0; border-radius: 9999px; cursor: pointer;
-                padding: 6px var(--ha-space-4); background: transparent;
-                color: var(--secondary-text-color);
-                font: inherit; font-size: var(--ha-font-size-m); }
-  .seg button[aria-selected="true"] { background: var(--state-icon-color); color: #fff; }
-  .seg button:focus-visible { outline: 2px solid var(--state-icon-color); outline-offset: 2px; }
-  #stamp { font-size: var(--ha-font-size-s); color: var(--secondary-text-color);
-           text-align: center; margin: var(--ha-space-4) 0 0; }
 
   /* Title left, language toggle hard right, baselines aligned. */
   .topbar { display: flex; align-items: flex-start; justify-content: space-between;
@@ -224,6 +225,7 @@
   <div id="pm25">–</div>
   <div id="unit"><span id="pm-unit"></span><span id="aqi" hidden></span></div>
   <div id="cat"></div>
+  <div id="stamp"></div>
 </div>
 
 <dialog id="scale" aria-labelledby="scale-title">
@@ -240,6 +242,14 @@
   <p id="scale-note"></p>
 </dialog>
 
+<dialog id="about" aria-labelledby="about-title">
+  <header>
+    <h3 id="about-title"></h3>
+    <form method="dialog"><button id="about-close"></button></form>
+  </header>
+  <p id="about-text"></p>
+</dialog>
+
 <h2 id="sec-particulates"></h2>
 <div class="row row-2" id="primary"></div>
 
@@ -253,20 +263,8 @@
 </div>
 
 <h2 id="sec-map"></h2>
-<!-- Windy leads: it is the only one of the two that takes coordinates, so it is the
-     only one that can centre on the sensor. IQAir's embeddable map accepts no
-     parameters at all — it opens on their default extent and the viewer pans.
-     Labels and frame titles are filled from i18n; only the URLs live here. -->
-<div class="seg" id="maptabs" role="tablist">
-  <button role="tab" aria-selected="true" aria-controls="map" data-key="wind"
-    data-src="https://embed.windy.com/embed2.html?lat=45.308&lon=18.410&detailLat=45.308&detailLon=18.410&zoom=9&overlay=wind&marker=true&metricTemp=%C2%B0C"></button>
-  <button role="tab" aria-selected="false" aria-controls="map" data-key="iqair"
-    data-src="https://www.iqair.com/embeddable-map"></button>
-</div>
 <iframe id="map" loading="lazy"
   src="https://embed.windy.com/embed2.html?lat=45.308&lon=18.410&detailLat=45.308&detailLon=18.410&zoom=9&overlay=wind&marker=true&metricTemp=%C2%B0C"></iframe>
-
-<p id="stamp"></p>
 
 <script type="module">
 import { aqi, usAqi, CATEGORIES } from "./aqi.js";
@@ -314,8 +312,8 @@ const setText = (id, text) => { document.getElementById(id).textContent = text; 
 // Entity set comes from air-quality-sensor.yaml: SPS30 particulates, SGP4x, SHT4x.
 // Names are keys into sensors.* in the translation files.
 const PRIMARY = [
-  ["pm10", "µg/m³", 1, "molecule"],
-  ["pm1", "µg/m³", 1, "molecule"],
+  ["pm10", "µg/m³", 2, "molecule"],
+  ["pm1", "µg/m³", 2, "molecule"],
 ];
 const SECONDARY = [
   ["voc", "", 0, "heatWave"],
@@ -327,14 +325,19 @@ const SECONDARY = [
 const value = (now, key, unit, digits) =>
   `${num(now?.[key], digits)}${unit ? ` ${unit}` : ""}`;
 
+const aboutButton = (key) =>
+  `<button class="about" data-key="${key}" aria-label="${fill(t.about.open, { name: t.sensors[key] })}">${icon("info")}</button>`;
+
 const tiles = (now, list, shape) => list
   .map(([key, unit, digits, glyph]) => (shape === "center"
     ? `<div class="card tile-center">
+         ${aboutButton(key)}
          ${icon(glyph)}
          <div class="k">${t.sensors[key]}</div>
          <div class="v">${value(now, key, unit, digits)}</div>
        </div>`
     : `<div class="card tile-row">
+         ${aboutButton(key)}
          ${icon(glyph)}
          <div>
            <div class="k">${t.sensors[key]}</div>
@@ -368,23 +371,19 @@ function applyStrings() {
   setText("col-aqi", t.dialog.colAqi);
   setText("col-pm", t.dialog.colPm);
   setText("scale-note", t.dialog.note);
+  document.getElementById("about-close").setAttribute("aria-label", t.dialog.close);
   drawScaleRows();
 
   svg.setAttribute("aria-label", t.chart.aria);
-  document.querySelectorAll("#maptabs button").forEach((tab) => {
-    tab.textContent = t.map[tab.dataset.key];
-    tab.dataset.title = t.map[`${tab.dataset.key}Title`];
-    if (tab.getAttribute("aria-selected") === "true") mapFrame.title = tab.dataset.title;
-  });
-  document.getElementById("maptabs").setAttribute("aria-label", t.map.aria);
+  document.getElementById("map").title = t.map.title;
 }
 
-function render({ now, history }) {
+function render({ now, updated, history }) {
   const cat = aqi(now?.pm25);
   const hero = document.getElementById("hero");
   hero.style.setProperty("--tone-bg", cat.bg);
   hero.style.setProperty("--tone-ink", cat.ink);
-  setText("pm25", num(now?.pm25));
+  setText("pm25", num(now?.pm25, 2));
   setText("cat", t.levels[cat.key]);
 
   const index = usAqi(now?.pm25);
@@ -398,8 +397,8 @@ function render({ now, history }) {
   points = history.filter((p) => typeof p.pm25 === "number");
   drawChart();
 
-  setText("stamp", history.length
-    ? fill(t.updated, { time: new Date(history.at(-1).h).toLocaleString(t.locale) })
+  setText("stamp", updated
+    ? fill(t.updated, { time: new Date(updated).toLocaleString(t.locale) })
     : t.noReadings);
 }
 
@@ -423,8 +422,8 @@ function drawChart() {
     return;
   }
 
-  // Floor of 12 keeps a clean week from rendering as dramatic noise near zero.
-  const { step, top } = niceMax(Math.max(12, ...points.map((p) => p.pm25)));
+  // +2 µg/m³ headroom so the week's peak never touches the top edge.
+  const { step, top } = niceMax(Math.max(...points.map((p) => p.pm25)) + 2);
   const w = W - PAD.left - PAD.right;
   const h = H - PAD.top - PAD.bottom;
   const n = points.length;
@@ -457,7 +456,7 @@ function drawChart() {
   for (let i = 0; i < n; i += every) {
     const x = plot.x(i);
     svgText += grid(x, PAD.top, x, PAD.top + h)
-      + label(x, H - 8, new Date(points[i].h).toLocaleDateString(undefined, fmt), "middle");
+      + label(x, H - 8, new Date(points[i].ts).toLocaleDateString(undefined, fmt), "middle");
   }
 
   // The polyline inherits `stroke` from #chart, which the dark media query swaps.
@@ -496,7 +495,7 @@ function showTip(event) {
   dot.setAttribute("cx", x);
   dot.setAttribute("cy", y);
 
-  tip.innerHTML = `<b>${point.pm25.toFixed(1)} µg/m³</b>${new Date(point.h)
+  tip.innerHTML = `<b>${point.pm25.toFixed(1)} µg/m³</b>${new Date(point.ts)
     .toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
   tip.hidden = false;
   // Clamp so the tooltip never hangs off either edge of the card.
@@ -525,21 +524,25 @@ function drawScaleRows() {
 
 document.getElementById("info").innerHTML = icon("info");
 document.getElementById("scale-close").innerHTML = icon("close");
+document.getElementById("about-close").innerHTML = icon("close");
 document.getElementById("info").addEventListener("click", () => scale.showModal());
-// A native dialog closes on Esc and on the close button; add click-outside.
-scale.addEventListener("click", (e) => { if (e.target === scale) scale.close(); });
 
-// Map layer tabs: swap the one iframe's src rather than loading both of them.
-const mapFrame = document.getElementById("map");
-document.querySelectorAll("#maptabs button").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    if (tab.getAttribute("aria-selected") === "true") return;
-    document.querySelectorAll("#maptabs button")
-      .forEach((other) => other.setAttribute("aria-selected", String(other === tab)));
-    mapFrame.title = tab.dataset.title;
-    mapFrame.src = tab.dataset.src;
+// Tiles are re-rendered on every load, so listen on their containers.
+const about = document.getElementById("about");
+for (const id of ["primary", "secondary"]) {
+  document.getElementById(id).addEventListener("click", (e) => {
+    const key = e.target.closest(".about")?.dataset.key;
+    if (!key) return;
+    setText("about-title", t.sensors[key]);
+    setText("about-text", t.about[key]);
+    about.showModal();
   });
-});
+}
+
+// A native dialog closes on Esc and on the close button; add click-outside.
+for (const dialog of [scale, about]) {
+  dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
+}
 
 svg.addEventListener("pointermove", showTip);
 svg.addEventListener("pointerdown", showTip);
@@ -575,7 +578,7 @@ async function load() {
 await setLanguage(lang);
 setText("cat", t.loading);
 load();
-setInterval(load, 300000);
+setInterval(load, 60000);
 </script>
 </body>
 </html>

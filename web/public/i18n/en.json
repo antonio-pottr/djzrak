@@ -17,7 +17,7 @@
     "particulates": "Particulates",
     "sensor": "Outdoor sensor",
     "history": "PM2.5 history",
-    "map": "Regional air quality"
+    "map": "Regional wind"
   },
   "sensors": {
     "pm10": "PM10",
@@ -37,16 +37,12 @@
     "noData": "No data"
   },
   "chart": {
-    "aria": "PM2.5 hourly average over the last 7 days",
+    "aria": "PM2.5 5-minute average over the last 7 days",
     "empty": "Not enough history yet",
     "unit": "µg/m³"
   },
   "map": {
-    "aria": "Map layer",
-    "wind": "Wind",
-    "windTitle": "Windy animated wind map centred on Đakovo",
-    "iqair": "IQAir stations",
-    "iqairTitle": "IQAir air quality station map"
+    "title": "Windy animated wind map centred on Đakovo"
   },
   "dialog": {
     "open": "What the air quality levels mean",
@@ -56,5 +52,14 @@
     "colAqi": "US AQI",
     "colPm": "PM2.5 µg/m³",
     "note": "Levels follow the US EPA AQI for PM2.5, May 2024 revision — the same scale IQAir uses. The big number on this page is the raw concentration in µg/m³, which is what IQAir's station map plots; the chip beside it is that concentration converted to the US AQI index, which is what IQAir Earth and their city pages show."
+  },
+  "about": {
+    "open": "What {name} means",
+    "pm10": "Mass of all particles up to 10 µm across, per cubic metre of air: dust, pollen, soot, road and construction dust. Measured by a Sensirion SPS30, which counts particles in a laser beam and converts the count to mass. The SPS30 sees particles below 10 µm directly and estimates the coarse end, so treat PM10 as ±25 µg/m³ below 100 µg/m³ and ±25 % above.",
+    "pm1": "Mass of particles smaller than 1 µm, per cubic metre of air. These are mostly smoke from wood stoves, traffic and fires, and they reach deepest into the lungs. Measured by a Sensirion SPS30 laser-scattering sensor, with a precision of ±10 µg/m³ below 100 µg/m³ and ±10 % above.",
+    "voc": "Volatile organic compounds (solvents, smoke, cooking, exhaust) from a Sensirion SGP41 gas sensor. This is an index from 1 to 500, not a concentration. The sensor learns its own average over the past hours and calls it 100. Below 100 the air is cleaner than usual, and above 100 it is worse (200 means about twice the usual level). It shows change over time and can't be compared between sensors.",
+    "nox": "Nitrogen oxides (NO, NO₂) from burning: traffic, heating, gas appliances. This comes from the same Sensirion SGP41 sensor as an index from 1 to 500. Unlike the VOC Index, 1 is normal here, and anything above 1 means combustion gases above the usual background. It shows change over time, not a concentration.",
+    "temp": "Air temperature from a Sensirion SHT4x sensor, typically accurate to ±0.2 °C. The same reading corrects the SGP41 gas measurements. Placement matters: direct sun or a warm wall makes any air thermometer read high.",
+    "hum": "Relative humidity from the same Sensirion SHT4x sensor, typically accurate to ±1.8 %RH. It also corrects the gas readings. In fog or above about 85 % humidity, water droplets can make the particle readings look higher than they are."
   }
 }

@@ -106,6 +106,7 @@ for (const [code, table] of Object.entries(strings)) {
   assert.match(table.usAqi, /\{value\}/, `${code}.json usAqi needs {value}`);
   assert.match(table.updated, /\{time\}/, `${code}.json updated needs {time}`);
   assert.match(table.apiError, /\{status\}/, `${code}.json apiError needs {status}`);
+  assert.match(table.about.open, /\{name\}/, `${code}.json about.open needs {name}`);
   assert.ok(table.locale, `${code}.json needs a locale for date formatting`);
   for (const path of paths(table)) {
     const value = path.split(".").reduce((o, k) => o[k], table);
