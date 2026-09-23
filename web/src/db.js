@@ -22,12 +22,15 @@ export const latestReading = async (env) => {
 
 // A plain range scan over the primary key: ~2,016 rows for a week, and D1 bills exactly that.
 // The rows are already one per bucket, so there is nothing to average and no GROUP BY to pay
-// for. json_extract pulls the one sensor the caller asked for.
-export const sensorHistory = async (env, sensor) => {
-  // Interpolated into the SQL below, so it is checked here too rather than only at the route.
-  if (!SENSORS.includes(sensor)) throw new Error(`unknown sensor: ${sensor}`);
+// for. Every sensor comes out of the same scan, one json_extract column each, so the page's
+// sparklines and 24-hour ranges cost no more rows than a single chart did.
+//
+// Columnar ({ ts: [...], pm25: [...], ... }) because a week of seven sensors as {ts, v}
+// objects is ~400 KB of repeated keys. A missing reading is null at its index.
+export const weekHistory = async (env) => {
+  // SENSORS is a fixed whitelist, so interpolating it into the SQL is safe.
+  const columns = SENSORS.map((s) => `ROUND(json_extract(data, '$.${s}'), 2) AS ${s}`).join(", ");
   const { results } = await env.DB.prepare(
-    `SELECT ts, json_extract(data, '$.${sensor}') AS v
-     FROM readings WHERE ts > ? ORDER BY ts`).bind(Date.now() - WEEK).all();
-  return results.filter((r) => typeof r.v === "number");
+    `SELECT ts, ${columns} FROM readings WHERE ts > ? ORDER BY ts`).bind(Date.now() - WEEK).all();
+  return Object.fromEntries(["ts", ...SENSORS].map((key) => [key, results.map((r) => r[key])]));
 };

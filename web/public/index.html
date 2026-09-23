@@ -6,303 +6,186 @@
 <title>Kvaliteta zraka — Đakovo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap">
 <style>
-  /* Home Assistant design tokens, names and values as published in the frontend:
-     resources/theme/typography.globals.ts, core.globals.ts, color/color.globals.ts */
+  /* Editorial layout: a sentence answers "how's the air?", the PM2.5 card backs it with the
+     number, and everything below shows the working. Serif for headings and the big figure. */
   :root {
     color-scheme: light dark;
+    --serif: Fraunces, Georgia, serif;
+    --sans: Inter, system-ui, sans-serif;
 
-    --ha-font-family-body: Roboto, Noto, "Noto Sans", system-ui, sans-serif;
-    --ha-font-size-s: 12px;
-    --ha-font-size-m: 14px;
-    --ha-font-size-l: 16px;
-    --ha-font-size-xl: 20px;
-    --ha-font-size-2xl: 24px;
-    --ha-font-size-4xl: 32px;
-    --ha-font-weight-normal: 400;
-    --ha-font-weight-medium: 500;
-    --ha-font-weight-bold: 700;
-    --ha-line-height-condensed: 1.2;
-    --ha-line-height-normal: 1.6;
-
-    --ha-space-1: 4px;
-    --ha-space-2: 8px;
-    --ha-space-3: 12px;
-    --ha-space-4: 16px;
-    --ha-space-6: 24px;
-    --ha-border-radius-lg: 12px;
-
-    --primary-background-color: #f7f7f8;
-    --card-background-color: #ffffff;
-    --primary-text-color: #212121;
-    --secondary-text-color: #5f6368;
-    --divider-color: #e3e3e4;
-    /* HA's long-standing state icon colour */
-    --state-icon-color: #44739e;
-    /* History charts use the Observable10 palette; its first colour is the line. */
-    --chart-line-color: #4269d0;
-    --chart-grid-color: #e6e6e7;
+    --bg: #faf8f4;
+    --surface: #ffffff;
+    --text: #1d1b18;
+    --muted: #6b665d;
+    --rule: #e6e1d8;
+    --line: #2d5b8a;
+    --grid: #ece7de;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --primary-background-color: #111111;
-      --card-background-color: #1c1c1c;
-      --primary-text-color: #e1e1e1;
-      --secondary-text-color: #9b9b9b;
-      --divider-color: rgba(225, 225, 225, .12);
-      --state-icon-color: #92b8dc;
-      --chart-line-color: #97bbf5;
-      --chart-grid-color: rgba(225, 225, 225, .1);
+      --bg: #171614;
+      --surface: #1f1d1a;
+      --text: #efebe4;
+      --muted: #a39d92;
+      --rule: #34302b;
+      --line: #8fb8e3;
+      --grid: #2a2723;
     }
   }
 
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  /* The UA's [hidden] rule covers HTML only, so the chart's hover marker needs its own. */
+  svg [hidden] { display: none; }
 
-  body {
-    margin: 0 auto;
-    max-width: 840px;
-    /* Side gutter shrinks on a phone, and never lets a card touch the edge. */
-    padding: clamp(10px, 2.5vw, 20px) clamp(10px, 2.5vw, 20px) var(--ha-space-6);
-    overflow-x: hidden;
-    background: var(--primary-background-color);
-    color: var(--primary-text-color);
-    font-family: var(--ha-font-family-body);
-    font-size: var(--ha-font-size-m);
-    line-height: var(--ha-line-height-normal);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+  body { margin: 0 auto; max-width: 760px; padding: 24px clamp(16px, 4vw, 32px) 48px;
+         background: var(--bg); color: var(--text); font: 15px/1.6 var(--sans);
+         -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  button { font: inherit; color: inherit; }
+  button:focus-visible { outline: 2px solid var(--line); outline-offset: 2px; }
 
-  h1 { font-size: var(--ha-font-size-xl); font-weight: var(--ha-font-weight-normal);
-       line-height: var(--ha-line-height-condensed); margin: var(--ha-space-2) 0 var(--ha-space-4); }
-  h1 small { display: block; font-size: var(--ha-font-size-m);
-             color: var(--secondary-text-color); margin-top: var(--ha-space-1); }
-  h2 { font-size: var(--ha-font-size-l); font-weight: var(--ha-font-weight-normal);
-       line-height: var(--ha-line-height-condensed);
-       margin: var(--ha-space-6) 0 var(--ha-space-3); }
-  /* Sits tight under its h2, so it reads as part of the heading, not the chart. */
-  #sec-history-note { margin: calc(-1 * var(--ha-space-2)) 0 var(--ha-space-3);
-                      color: var(--secondary-text-color); font-size: var(--ha-font-size-s); }
+  .mast { display: flex; justify-content: space-between; align-items: center; gap: 12px;
+          border-bottom: 1px solid var(--rule); padding-bottom: 12px; color: var(--muted); font-size: 13px; }
+  .mast b { color: var(--text); font-weight: 600; letter-spacing: .02em; }
+  .mast .actions { display: flex; gap: 6px; flex: none; }
+  .link { background: none; border: 1px solid var(--rule); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+  .link:hover { background: var(--surface); }
+  .link:disabled { opacity: .5; cursor: default; }
 
-  /* ha-card: white, 12px radius, hairline border, no shadow */
-  .card { background: var(--card-background-color);
-          border: 1px solid var(--divider-color);
-          border-radius: var(--ha-border-radius-lg);
-          padding: var(--ha-space-4); min-width: 0; }
-  .row { display: grid; gap: var(--ha-space-3); }
-  .row-2 { grid-template-columns: 1fr 1fr; }
+  /* Hero: the sentence, the level-coloured PM2.5 card, then a quiet row of secondary readings.
+     The tone is one IQAir band colour in both themes; test.mjs holds each pair to WCAG AA. */
+  h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 6.5vw, 52px);
+       line-height: 1.1; margin: 28px 0 16px; letter-spacing: -.01em; text-wrap: balance; }
+  h1 mark { background: var(--tone-bg); color: var(--tone-ink); padding: 0 .18em; border-radius: .12em;
+            -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .card { background: var(--tone-bg); color: var(--tone-ink); border-radius: 12px; padding: 20px 22px; }
+  .kicker { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+  .big { font-family: var(--serif); font-variant-numeric: tabular-nums lining-nums;
+         font-size: clamp(72px, 20vw, 128px); line-height: .9; letter-spacing: -.03em; }
+  .big small { font-family: var(--sans); font-size: 16px; letter-spacing: 0; opacity: .7; margin-left: 8px; }
+  #aqi { font-size: 14px; margin-top: 12px; opacity: .85; font-variant-numeric: tabular-nums; }
 
-  .icon { display: block; width: 24px; height: 24px; flex: none;
-          fill: var(--state-icon-color); }
+  .sec { display: flex; flex-wrap: wrap; margin: 20px 0 24px; padding: 0; border-top: 1px solid var(--rule); }
+  .sec div { flex: 1 1 110px; padding: 10px 16px 0 0; }
+  .sec dt { font-size: 12px; color: var(--muted); }
+  .sec dd { margin: 0; font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
 
-  /* Area-card anatomy: icon centred on top, bold name, value beneath. */
-  .tile-center { text-align: center; }
-  .tile-center .icon { margin: var(--ha-space-1) auto var(--ha-space-3); width: 28px; height: 28px; }
-  .tile-center .k { font-size: var(--ha-font-size-l); font-weight: var(--ha-font-weight-bold); }
-  .tile-center .v { font-size: clamp(24px, 6.5vw, 32px); font-weight: var(--ha-font-weight-normal);
-                    line-height: var(--ha-line-height-condensed); margin-top: var(--ha-space-2);
-                    font-variant-numeric: tabular-nums; }
+  /* The level scale sits on the page with a marker, and its definitions fold out below it. */
+  .bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; position: relative; height: 10px; margin-top: 8px; }
+  .bar span { border-radius: 2px; }
+  #marker { position: absolute; top: -6px; width: 4px; height: 22px; background: var(--text);
+            border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--bg); }
+  .ticks { display: grid; grid-template-columns: repeat(6, 1fr); font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .ticks span { padding-right: 4px; line-height: 1.3; }
+  details { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+  details summary { cursor: pointer; }
+  details table { width: 100%; border-collapse: collapse; margin: 10px 0; font-variant-numeric: tabular-nums; color: var(--text); }
+  details th { text-align: left; font-size: 12px; font-weight: 500; color: var(--muted); padding: 4px 8px; }
+  details td { padding: 6px 8px; border-top: 1px solid var(--rule); }
+  details th:last-child, details td:last-child { text-align: right; }
+  details .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+  details p { margin: 0; }
 
-  /* Sensor-row anatomy: icon left, bold name, value beneath it. */
-  .tile-row { display: flex; align-items: flex-start; gap: var(--ha-space-3); }
-  .tile-row .k { font-size: var(--ha-font-size-l); font-weight: var(--ha-font-weight-bold);
-                 line-height: var(--ha-line-height-condensed); }
-  .tile-row .v { font-size: var(--ha-font-size-m); color: var(--secondary-text-color);
-                 margin-top: var(--ha-space-1); font-variant-numeric: tabular-nums; }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 20px; margin: 40px 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
 
-  /* An IQAir band keeps one colour in both themes, like their AQI chip. */
-  #hero { position: relative; padding: clamp(20px, 5vw, 32px); text-align: center;
-          border-color: transparent;
-          background: var(--tone-bg); color: var(--tone-ink); }
-  #info { right: var(--ha-space-2); }
-  #pm-chart { right: auto; left: var(--ha-space-2); }
-  #info, #pm-chart { position: absolute; top: var(--ha-space-2);
-          display: grid; place-items: center; width: 40px; height: 40px;
-          border: 0; border-radius: 50%; background: transparent; color: inherit;
-          cursor: pointer; }
-  #info:hover, #pm-chart:hover { background: rgb(0 0 0 / .1); }
-  #info:focus-visible, #pm-chart:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
-  #info svg, #pm-chart svg { width: 22px; height: 22px; fill: currentColor; opacity: .75; }
+  /* Every sensor in one table: now, the day's range, the week's shape. */
+  .tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .tbl thead th { text-align: left; font-size: 12px; font-weight: 500; color: var(--muted);
+                  padding: 6px 8px; border-bottom: 1px solid var(--text); }
+  .tbl td, .tbl tbody th { padding: 10px 8px; border-bottom: 1px solid var(--rule); vertical-align: middle; text-align: left; }
+  .tbl tbody th { font-weight: 600; }
+  .tbl tr.row { cursor: pointer; }
+  .tbl tr.row:hover > *, .tbl tr.on > * { background: var(--surface); }
+  .tbl tr.on > th { box-shadow: inset 3px 0 var(--line); }
+  #th-now { text-align: right; }
+  .tbl .now { font-size: 17px; font-weight: 500; white-space: nowrap; text-align: right; }
+  .tbl .rng { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .tbl svg { width: 110px; height: 26px; display: block; }
+  .tbl td.info { width: 1%; }
+  .about { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%;
+           background: none; color: var(--muted); cursor: pointer; }
+  .about:hover { background: var(--rule); }
+  .about svg { width: 18px; height: 18px; fill: currentColor; }
+  .tbl tr.expl td { color: var(--muted); font-size: 13px; background: var(--surface); padding: 4px 8px 14px; }
+  @media (max-width: 560px) { .tbl .spark, .tbl .rng { display: none; } }
 
-  /* Native <dialog> gives the backdrop, Esc-to-close and focus trap for free. */
-  dialog::backdrop { background: rgb(0 0 0 / .45); }
-  dialog { border: 0; border-radius: var(--ha-border-radius-lg); padding: 0;
-           width: min(420px, calc(100vw - 32px)); max-height: 85vh; overflow: auto;
-           background: var(--card-background-color); color: var(--primary-text-color);
-           font-family: var(--ha-font-family-body); font-size: var(--ha-font-size-m); }
-  dialog header { display: flex; align-items: center; justify-content: space-between;
-                  gap: var(--ha-space-2); padding: var(--ha-space-4) var(--ha-space-4) 0; }
-  dialog h3 { margin: 0; font-size: var(--ha-font-size-xl);
-              font-weight: var(--ha-font-weight-normal); }
-  dialog form { margin: 0; }
-  dialog button { display: grid; place-items: center; width: 40px; height: 40px;
-                  border: 0; border-radius: 50%; background: transparent;
-                  color: var(--secondary-text-color); cursor: pointer; }
-  dialog button:hover { background: var(--primary-background-color); }
-  dialog button svg { width: 22px; height: 22px; fill: currentColor; }
-  dialog table { width: 100%; border-collapse: collapse; margin: var(--ha-space-3) 0; }
-  dialog th { text-align: left; font-size: var(--ha-font-size-s);
-              font-weight: var(--ha-font-weight-medium);
-              color: var(--secondary-text-color);
-              padding: 0 var(--ha-space-4) var(--ha-space-1); }
-  dialog th:last-child, dialog td:last-child { text-align: right; }
-  dialog td { padding: var(--ha-space-2) var(--ha-space-4);
-              border-top: 1px solid var(--divider-color);
-              font-variant-numeric: tabular-nums; }
-  dialog .band { display: flex; align-items: center; gap: var(--ha-space-2);
-                 font-weight: var(--ha-font-weight-medium); }
-  dialog .swatch { width: 14px; height: 14px; border-radius: 4px; flex: none; }
-  dialog p { margin: 0; padding: 0 var(--ha-space-4) var(--ha-space-4);
-             color: var(--secondary-text-color); font-size: var(--ha-font-size-s);
-             line-height: var(--ha-line-height-normal); }
-  #about p { padding-top: var(--ha-space-3); }
+  .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; }
+  .tabs button { border: 1px solid var(--rule); background: none; border-radius: 999px; padding: 2px 12px;
+                 font-size: 13px; cursor: pointer; color: var(--muted); }
+  .tabs button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
 
-  /* Small (i) in each tile's corner, opening that sensor's explanation. */
-  .tile-center, .tile-row { position: relative; }
-  .about { position: absolute; top: var(--ha-space-1); right: var(--ha-space-1);
-           display: grid; place-items: center; width: 36px; height: 36px;
-           border: 0; border-radius: 50%; background: transparent; cursor: pointer;
-           color: var(--secondary-text-color); }
-  .about:hover { background: var(--primary-background-color); }
-  .about:focus-visible { outline: 2px solid var(--state-icon-color); outline-offset: -4px; }
-  .about .icon { width: 20px; height: 20px; margin: 0; fill: currentColor; }
-  /* Chart button: top-left in centred tiles, under the (i) in row tiles. */
-  .tile-row { padding-right: 44px; }
-  .about.chart-btn { right: auto; left: var(--ha-space-1); }
-  .tile-row .about.chart-btn { left: auto; right: var(--ha-space-1); top: calc(var(--ha-space-1) + 36px); }
-  .chart-btn[aria-pressed="true"] { color: var(--state-icon-color); }
-  #pm25 { font-size: clamp(52px, 18vw, 96px); font-weight: var(--ha-font-weight-bold);
-          line-height: 1; font-variant-numeric: tabular-nums; }
-  #unit { display: flex; justify-content: center; align-items: center; flex-wrap: wrap;
-          gap: var(--ha-space-2); margin-top: var(--ha-space-2);
-          font-size: clamp(13px, 3.5vw, 16px); }
-  /* The US AQI figure IQAir leads with, alongside the raw concentration. */
-  #aqi { font-weight: var(--ha-font-weight-bold); font-variant-numeric: tabular-nums;
-         background: rgb(0 0 0 / .13); border-radius: 9999px; padding: 2px 10px; }
-  #cat { font-size: clamp(14px, 3.8vw, 16px); font-weight: var(--ha-font-weight-bold);
-         margin-top: var(--ha-space-2); text-wrap: balance; }
-  #stamp { font-size: var(--ha-font-size-s); opacity: .8; margin-top: var(--ha-space-1);
-           font-variant-numeric: tabular-nums; }
-
-  #chartwrap { position: relative; }
+  #chartwrap { position: relative; background: var(--surface); border: 1px solid var(--rule);
+               border-radius: 8px; padding: 12px 8px 4px; }
   /* pan-y keeps vertical page scrolling while horizontal drags read the chart */
-  #chart { width: 100%; height: clamp(180px, 32vw, 240px); display: block;
-           touch-action: pan-y; stroke: var(--chart-line-color); }
-  #dot { fill: var(--chart-line-color); }
-  /* The UA's [hidden] rule covers HTML only, so the hover marker needs its own. */
-  #chart [hidden] { display: none; }
+  #chart { width: 100%; height: 240px; display: block; touch-action: pan-y; }
   #tip { position: absolute; pointer-events: none; transform: translate(-50%, -100%);
-         background: var(--primary-text-color); color: var(--card-background-color);
-         font-size: var(--ha-font-size-s); line-height: var(--ha-line-height-condensed);
-         padding: 6px 10px; border-radius: var(--ha-border-radius-lg); white-space: nowrap;
-         font-variant-numeric: tabular-nums; }
-  #tip b { display: block; font-size: var(--ha-font-size-m);
-           font-weight: var(--ha-font-weight-medium); }
+         background: var(--text); color: var(--bg); font-size: 12px; line-height: 1.3;
+         padding: 6px 10px; border-radius: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #tip b { display: block; font-size: 14px; font-weight: 500; }
 
-  iframe { display: block; width: 100%; height: clamp(300px, 55vh, 460px);
-           border: 1px solid var(--divider-color);
-           border-radius: var(--ha-border-radius-lg); }
-
-
-  /* Title left, language toggle hard right, baselines aligned. */
-  .topbar { display: flex; align-items: flex-start; justify-content: space-between;
-            gap: var(--ha-space-3); }
-  .topbar h1 { flex: 1; min-width: 0; }
-  #lang, #refresh { flex: none; margin-top: var(--ha-space-2); cursor: pointer;
-          padding: 6px var(--ha-space-3); border-radius: 9999px;
-          border: 1px solid var(--divider-color);
-          background: var(--card-background-color); color: var(--primary-text-color);
-          font: inherit; font-size: var(--ha-font-size-m);
-          font-weight: var(--ha-font-weight-medium); }
-  #lang:hover, #refresh:hover { background: var(--primary-background-color); }
-  #lang:focus-visible, #refresh:focus-visible {
-          outline: 2px solid var(--state-icon-color); outline-offset: 2px; }
-  #refresh { display: grid; place-items: center; padding: 6px var(--ha-space-2); }
-  #refresh .icon { width: 20px; height: 20px; fill: currentColor; }
-  #refresh:disabled { opacity: .5; cursor: default; }
-
-  /* Below 400px two sensor rows per line get too cramped for icon + name. */
-  @media (max-width: 400px) {
-    #secondary { grid-template-columns: 1fr; }
-  }
-
+  iframe { display: block; width: 100%; height: clamp(300px, 55vh, 400px);
+           border: 1px solid var(--rule); border-radius: 8px; }
+  footer { margin-top: 32px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--rule); padding-top: 12px; }
 </style>
 </head>
 <body>
-<div class="topbar">
-  <h1 id="heading"></h1>
-  <button id="refresh"></button>
-  <button id="lang"></button>
-</div>
+<header class="mast">
+  <span><b id="brand"></b> · <span id="stamp"></span></span>
+  <span class="actions"><button class="link" id="refresh"></button><button class="link" id="lang"></button></span>
+</header>
 
-<div class="card" id="hero">
-  <button id="pm-chart" class="chart-btn" data-key="pm25"></button>
-  <button id="info"></button>
-  <div id="pm25">–</div>
-  <div id="unit"><span id="pm-unit"></span><span id="aqi" hidden></span></div>
-  <div id="cat" aria-live="polite"></div>
-  <div id="stamp"></div>
-</div>
+<section id="hero">
+  <h1 id="headline" aria-live="polite"></h1>
+  <div class="card">
+    <div class="kicker" id="pm-label"></div>
+    <div class="big"><span id="pm25">–</span><small>µg/m³</small></div>
+    <div id="aqi"></div>
+  </div>
+  <dl class="sec" id="summary"></dl>
+</section>
 
-<dialog id="scale" aria-labelledby="scale-title">
-  <header>
-    <h3 id="scale-title"></h3>
-    <form method="dialog"><button id="scale-close"></button></form>
-  </header>
+<div class="bar" id="bar" role="img"><i id="marker" hidden></i></div>
+<div class="ticks" id="ticks" aria-hidden="true"></div>
+<details>
+  <summary id="scale-more"></summary>
   <table>
-    <thead>
-      <tr><th id="col-level"></th><th id="col-aqi"></th><th id="col-pm"></th></tr>
-    </thead>
+    <thead><tr><th id="col-level"></th><th id="col-aqi"></th><th id="col-pm"></th></tr></thead>
     <tbody id="scale-rows"></tbody>
   </table>
   <p id="scale-note"></p>
-</dialog>
+</details>
 
-<dialog id="about" aria-labelledby="about-title">
-  <header>
-    <h3 id="about-title"></h3>
-    <form method="dialog"><button id="about-close"></button></form>
-  </header>
-  <p id="about-text"></p>
-</dialog>
-
-<h2 id="sec-particulates"></h2>
-<div class="row row-2" id="primary"></div>
-
-<h2 id="sec-sensor"></h2>
-<div class="row row-2" id="secondary"></div>
+<h2 id="sec-sensors"></h2>
+<p class="sub" id="sec-sensors-note"></p>
+<table class="tbl">
+  <thead><tr><th id="th-sensor"></th><th id="th-now"></th><th class="rng" id="th-day"></th><th class="spark" id="th-week"></th><th></th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
 
 <h2 id="sec-history"></h2>
-<p id="sec-history-note"></p>
-<div class="card" id="chartwrap">
+<p class="sub" id="sec-history-note"></p>
+<div class="tabs" id="tabs" role="group"></div>
+<div id="chartwrap">
   <svg id="chart" role="img"></svg>
   <div id="tip" hidden></div>
 </div>
 
 <h2 id="sec-map"></h2>
+<p class="sub" id="sec-map-note"></p>
 <iframe id="map" loading="lazy"
   src="https://embed.windy.com/embed2.html?lat=45.308&lon=18.410&detailLat=45.308&detailLon=18.410&zoom=9&overlay=wind&marker=true&metricTemp=%C2%B0C"></iframe>
+
+<footer id="footer"></footer>
 
 <script type="module">
 import { aqi, usAqi, CATEGORIES } from "./aqi.js";
 import { niceRange } from "./scale.js";
 
-// Material Design Icons (Pictogrammers, Apache-2.0) — the same glyphs HA picks for
-// these device classes: mdi:molecule, mdi:heat-wave, mdi:thermometer, mdi:water-percent.
-const ICONS = {
-  molecule: "M7.27,10L9,7H14.42L15.58,5L15.5,4.5A1.5,1.5 0 0,1 17,3A1.5,1.5 0 0,1 18.5,4.5C18.5,5.21 18,5.81 17.33,5.96L16.37,7.63L17.73,10L18.59,8.5L18.5,8A1.5,1.5 0 0,1 20,6.5A1.5,1.5 0 0,1 21.5,8C21.5,8.71 21,9.3 20.35,9.46L18.89,12L20.62,15C21.39,15.07 22,15.71 22,16.5A1.5,1.5 0 0,1 20.5,18A1.5,1.5 0 0,1 19,16.5V16.24L17.73,14L16.37,16.37L17.33,18.04C18,18.19 18.5,18.79 18.5,19.5A1.5,1.5 0 0,1 17,21A1.5,1.5 0 0,1 15.5,19.5L15.58,19L14.42,17H10.58L9.42,19L9.5,19.5A1.5,1.5 0 0,1 8,21A1.5,1.5 0 0,1 6.5,19.5C6.5,18.79 7,18.19 7.67,18.04L8.63,16.37L4.38,9C3.61,8.93 3,8.29 3,7.5A1.5,1.5 0 0,1 4.5,6A1.5,1.5 0 0,1 6,7.5C6,7.59 6,7.68 6,7.76L7.27,10M10.15,9L8.42,12L10.15,15H14.85L16.58,12L14.85,9H10.15Z",
-  heatWave: "M8.5 4.5L5.4 9.5L8.5 14.7L5.2 20.5L3.4 19.6L6.1 14.7L3 9.5L6.7 3.6L8.5 4.5M14.7 4.4L11.6 9.5L14.7 14.5L11.4 20.3L9.6 19.4L12.3 14.5L9.2 9.5L12.9 3.5L14.7 4.4M21 4.4L17.9 9.5L21 14.5L17.7 20.3L15.9 19.4L18.6 14.5L15.5 9.5L19.2 3.5L21 4.4",
-  thermometer: "M15 13V5A3 3 0 0 0 9 5V13A5 5 0 1 0 15 13M12 4A1 1 0 0 1 13 5V8H11V5A1 1 0 0 1 12 4Z",
-  info: "M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z",
-  refresh: "M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z",
-  close: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
-  chartLine: "M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z",
-  humidity: "M12,3.25C12,3.25 6,10 6,14C6,17.32 8.69,20 12,20A6,6 0 0,0 18,14C18,10 12,3.25 12,3.25M14.47,9.97L15.53,11.03L9.53,17.03L8.47,15.97M9.75,10A1.25,1.25 0 0,1 11,11.25A1.25,1.25 0 0,1 9.75,12.5A1.25,1.25 0 0,1 8.5,11.25A1.25,1.25 0 0,1 9.75,10M14.25,14.5A1.25,1.25 0 0,1 15.5,15.75A1.25,1.25 0 0,1 14.25,17A1.25,1.25 0 0,1 13,15.75A1.25,1.25 0 0,1 14.25,14.5Z",
-};
-
-const icon = (name) =>
-  `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[name]}"/></svg>`;
+// mdi:information-outline, Material Design Icons (Pictogrammers, Apache-2.0).
+const INFO_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/></svg>`;
 
 const num = (v, digits = 1) =>
   typeof v === "number" && Number.isFinite(v) ? v.toFixed(digits) : "—";
@@ -322,198 +205,279 @@ const readLang = () => {
 let lang = readLang() ?? LANGS[0];
 let t; // the loaded translation table
 let latest = null; // last /api/data payload, so switching language needs no refetch
-// Why the last load failed, kept because #cat belongs to render() and a failed load never
-// reaches it — without this, switching language leaves the error in the previous language.
+// Why the last load failed, kept because the headline belongs to render() and a failed load
+// never reaches it — without this, switching language leaves the error in the previous language.
 let failure = null; // { net: true } | { status: number }
+let series = "pm25"; // which sensor the history chart shows
+let open = null; // which sensor's explanation is unfolded in the table
 
-const showFailure = () =>
-  setText("cat", failure.net ? t.netError : fill(t.apiError, { status: failure.status }));
-
-// "Updated {time}" — the only interpolation the strings need.
 const fill = (template, values) =>
   template.replace(/\{(\w+)\}/g, (_, key) => values[key]);
 
 const setText = (id, text) => { document.getElementById(id).textContent = text; };
 
 // Entity set comes from air-quality-sensor.yaml: SPS30 particulates, SGP4x, SHT4x.
-// Names are keys into sensors.* in the translation files.
-const PRIMARY = [
-  ["pm10", "µg/m³", 2, "molecule"],
-  ["pm1", "µg/m³", 2, "molecule"],
+// Keys match SENSORS in src/db.js (test.mjs checks); names are keys into sensors.*.
+const SENSORS = [
+  ["pm25", "µg/m³", 2],
+  ["pm10", "µg/m³", 2],
+  ["pm1", "µg/m³", 2],
+  ["voc", "", 0],
+  ["nox", "", 0],
+  ["temp", "°C", 1],
+  ["hum", "%", 0],
 ];
-const SECONDARY = [
-  ["voc", "", 0, "heatWave"],
-  ["nox", "", 0, "heatWave"],
-  ["temp", "°C", 1, "thermometer"],
-  ["hum", "%", 0, "humidity"],
-];
 
-// Unit and precision per charted series. Particulate mass starts its axis at zero;
-// the rest (below-zero temperatures, an index hovering near 100) fit their own range.
-const SERIES = Object.fromEntries([["pm25", "µg/m³", 2], ...PRIMARY, ...SECONDARY]
-  .map(([key, unit, digits]) => [key, { unit, digits: Math.min(digits, 1), zero: unit === "µg/m³" }]));
+// Particulate mass starts its chart axis at zero; the rest (below-zero temperatures, an
+// index hovering near 100) fit their own range. Tooltips never need more than one decimal.
+const UNITS = Object.fromEntries(SENSORS.map(([key, unit, digits]) =>
+  [key, { unit, digits, tipDigits: Math.min(digits, 1), zero: unit === "µg/m³" }]));
 
-const value = (now, key, unit, digits) =>
-  `${num(now?.[key], digits)}${unit ? ` ${unit}` : ""}`;
+const withUnit = (key, v) => {
+  const { unit, digits } = UNITS[key];
+  return `${num(v, digits)}${unit ? ` ${unit}` : ""}`;
+};
 
-const aboutButton = (key) =>
-  `<button class="about" data-key="${key}" aria-label="${fill(t.about.open, { name: t.sensors[key] })}">${icon("info")}</button>`;
+// The Worker sends history as columns ({ ts: [...], pm25: [...] }) with null for a missing
+// reading; the table and chart want [{ ts, v }] with the gaps dropped.
+const points = (key) => {
+  const history = latest?.history;
+  if (!history?.[key]) return [];
+  return history.ts.map((ts, i) => ({ ts, v: history[key][i] }))
+    .filter((p) => typeof p.v === "number");
+};
 
-const chartButton = (key) =>
-  `<button class="about chart-btn" data-key="${key}" aria-pressed="${key === series}"
-    aria-label="${fill(t.chart.open, { name: t.sensors[key] })}">${icon("chartLine")}</button>`;
+const lastDay = (pts) => pts.filter((p) => p.ts > Date.now() - 864e5);
 
-const tiles = (now, list, shape) => list
-  .map(([key, unit, digits, glyph]) => (shape === "center"
-    ? `<div class="card tile-center">
-         ${chartButton(key)}
-         ${aboutButton(key)}
-         ${icon(glyph)}
-         <div class="k">${t.sensors[key]}</div>
-         <div class="v">${value(now, key, unit, digits)}</div>
-       </div>`
-    : `<div class="card tile-row">
-         ${chartButton(key)}
-         ${aboutButton(key)}
-         ${icon(glyph)}
-         <div>
-           <div class="k">${t.sensors[key]}</div>
-           <div class="v">${value(now, key, unit, digits)}</div>
-         </div>
-       </div>`))
-  .join("");
+const range = (pts, digits) => {
+  if (!pts.length) return "—";
+  const values = pts.map((p) => p.v);
+  return `${num(Math.min(...values), digits)}–${num(Math.max(...values), digits)}`;
+};
+
+// The bar gives each level an equal slot, so the marker needs each level's AQI span. Derived
+// from CATEGORIES so a breakpoint change moves the bar too; the AQI scale stops at 500.
+const AQI_EDGES = [0, ...CATEGORIES.slice(0, -1).map((c) => usAqi(c.max)), 500];
+
+const markerPercent = (index) => {
+  const band = AQI_EDGES.findIndex((_, i) => index <= AQI_EDGES[i + 1]);
+  const [lo, hi] = [AQI_EDGES[band], AQI_EDGES[band + 1]];
+  return ((band + (index - lo) / (hi - lo)) / CATEGORIES.length) * 100;
+};
+
+function sparkline(pts) {
+  if (pts.length < 2) return "";
+  const W = 110, H = 26, PAD = 2;
+  const values = pts.map((p) => p.v);
+  const lo = Math.min(...values), span = Math.max(...values) - lo || 1;
+  const line = pts.map((p, i) =>
+    `${((i / (pts.length - 1)) * W).toFixed(1)},${(PAD + (1 - (p.v - lo) / span) * (H - 2 * PAD)).toFixed(1)}`).join(" ");
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <polyline points="${line}" fill="none" stroke="var(--line)" stroke-width="1.25" vector-effect="non-scaling-stroke"/></svg>`;
+}
 
 // Static chrome. Runs on load and again on every language switch.
 function applyStrings() {
   document.documentElement.lang = lang;
   document.title = t.title;
-  setText("heading", t.heading);
-  document.getElementById("heading").append(
-    Object.assign(document.createElement("small"), { textContent: t.location }),
-  );
-  setText("pm-unit", t.pmUnit);
-  setText("sec-particulates", t.sections.particulates);
-  setText("sec-sensor", t.sections.sensor);
-  setText("sec-history", fill(t.sections.history, { name: t.sensors[series] }));
-  setText("sec-history-note", t.sections.historyNote);
-  document.getElementById("refresh").setAttribute("aria-label", t.refresh);
-  setText("sec-map", t.sections.map);
-
+  setText("brand", t.brand);
+  setText("refresh", t.refresh);
   const langButton = document.getElementById("lang");
   langButton.textContent = t.switch.label;
   langButton.setAttribute("aria-label", t.switch.aria);
 
-  document.getElementById("info").setAttribute("aria-label", t.dialog.open);
-  setText("scale-title", t.dialog.title);
-  document.getElementById("scale-close").setAttribute("aria-label", t.dialog.close);
-  setText("col-level", t.dialog.colLevel);
-  setText("col-aqi", t.dialog.colAqi);
-  setText("col-pm", t.dialog.colPm);
-  setText("scale-note", t.dialog.note);
-  document.getElementById("about-close").setAttribute("aria-label", t.dialog.close);
-  drawScaleRows();
+  setText("pm-label", t.pmNow);
+  document.getElementById("bar").setAttribute("aria-label", t.scale.aria);
+  setText("scale-more", t.scale.more);
+  setText("col-level", t.scale.colLevel);
+  setText("col-aqi", t.scale.colAqi);
+  setText("col-pm", t.scale.colPm);
+  setText("scale-note", t.scale.note);
+  drawScale();
 
+  setText("sec-sensors", t.sections.sensors);
+  setText("sec-sensors-note", t.sections.sensorsNote);
+  setText("th-sensor", t.table.sensor);
+  setText("th-now", t.table.now);
+  setText("th-day", t.table.day);
+  setText("th-week", t.table.week);
+
+  setText("sec-history", fill(t.sections.history, { name: t.sensors[series] }));
+  setText("sec-history-note", t.sections.historyNote);
+  document.getElementById("tabs").setAttribute("aria-label", t.chart.tabs);
   svg.setAttribute("aria-label", fill(t.chart.aria, { name: t.sensors[series] }));
-  const pmChart = document.getElementById("pm-chart");
-  pmChart.setAttribute("aria-label", fill(t.chart.open, { name: t.sensors.pm25 }));
-  pmChart.setAttribute("aria-pressed", String(series === "pm25"));
+
+  setText("sec-map", t.sections.map);
+  setText("sec-map-note", t.sections.mapNote);
   document.getElementById("map").title = t.map.title;
+  setText("footer", t.footer);
 }
 
-function render({ now, updated, history }) {
-  const cat = aqi(now?.pm25);
+// The colour bar, its tick labels and the definitions table all derive from CATEGORIES, so a
+// breakpoint change updates every one. Only the open-ended top band needs special casing.
+function drawScale() {
+  document.getElementById("bar").replaceChildren(
+    document.getElementById("marker"),
+    ...CATEGORIES.map((band) => Object.assign(document.createElement("span"), { style: `background:${band.bg}` })),
+  );
+  document.getElementById("ticks").innerHTML = CATEGORIES
+    // Each level starts one past the previous level's top AQI, as the table below lists it.
+    .map((band, i) => `<span>${t.levels[band.key]}<br>${i === 0 ? 0 : AQI_EDGES[i] + 1}</span>`).join("");
+  document.getElementById("scale-rows").innerHTML = CATEGORIES
+    .map((band, i) => {
+      const pmLo = i === 0 ? 0 : Number((CATEGORIES[i - 1].max + 0.1).toFixed(1));
+      const openEnded = !Number.isFinite(band.max);
+      return `<tr>
+        <td><span class="swatch" style="background:${band.bg}"></span>${t.levels[band.key]}</td>
+        <td>${openEnded ? `${usAqi(pmLo)}+` : `${usAqi(pmLo)}–${usAqi(band.max)}`}</td>
+        <td>${openEnded ? `${pmLo}+` : `${pmLo}–${band.max}`}</td>
+      </tr>`;
+    })
+    .join("");
+}
+
+function renderHero({ now, updated }) {
+  const pm = now?.pm25;
+  const cat = aqi(pm);
   const hero = document.getElementById("hero");
   hero.style.setProperty("--tone-bg", cat.bg);
   hero.style.setProperty("--tone-ink", cat.ink);
-  setText("pm25", num(now?.pm25, 2));
-  setText("cat", t.levels[cat.key]);
 
-  const index = usAqi(now?.pm25);
-  const chip = document.getElementById("aqi");
-  chip.textContent = index === null ? "" : fill(t.usAqi, { value: index });
-  chip.hidden = index === null;
+  const headline = document.getElementById("headline");
+  if (cat.key === "noData") {
+    headline.textContent = t.noReadings;
+  } else {
+    const [before, after] = t.headline.split("{level}");
+    const mark = Object.assign(document.createElement("mark"), { textContent: t.verdict[cat.key] });
+    headline.replaceChildren(before, mark, after);
+  }
 
-  document.getElementById("primary").innerHTML = tiles(now, PRIMARY, "center");
-  document.getElementById("secondary").innerHTML = tiles(now, SECONDARY, "row");
+  setText("pm25", num(pm, 2));
+  const index = usAqi(pm);
+  setText("aqi", index === null ? "" : fill(t.usAqi, { value: index }));
 
-  histories.pm25 = history;
-  drawChart();
+  const marker = document.getElementById("marker");
+  marker.hidden = index === null;
+  if (index !== null) marker.style.left = `${markerPercent(index)}%`;
+
+  document.getElementById("summary").innerHTML = [
+    [t.sensors.temp, withUnit("temp", now?.temp)],
+    [t.sensors.hum, withUnit("hum", now?.hum)],
+    [t.range24h, range(lastDay(points("pm25")), 1)],
+  ].map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join("");
 
   setText("stamp", updated
-    ? fill(t.updated, { time: new Date(updated).toLocaleString(t.locale) })
+    ? fill(t.updated, { time: new Date(updated).toLocaleString(t.locale,
+      { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) })
     : t.noReadings);
+}
+
+function renderRows({ now }) {
+  document.getElementById("rows").innerHTML = SENSORS.map(([key, , digits]) => {
+    const pts = points(key);
+    const row = `<tr class="row${key === series ? " on" : ""}" data-key="${key}">
+      <th scope="row">${t.sensors[key]}</th>
+      <td class="now">${withUnit(key, now?.[key])}</td>
+      <td class="rng">${range(lastDay(pts), digits)}</td>
+      <td class="spark">${sparkline(pts)}</td>
+      <td class="info"><button class="about" data-about="${key}" aria-expanded="${open === key}"
+        aria-label="${fill(t.about.open, { name: t.sensors[key] })}">${INFO_ICON}</button></td>
+    </tr>`;
+    return open === key ? `${row}<tr class="expl"><td colspan="5">${t.about[key]}</td></tr>` : row;
+  }).join("");
+}
+
+function renderTabs() {
+  document.getElementById("tabs").innerHTML = SENSORS.map(([key]) =>
+    `<button data-key="${key}" aria-pressed="${key === series}">${t.sensors[key]}</button>`).join("");
+}
+
+function render() {
+  renderHero(latest);
+  renderRows(latest);
+  renderTabs();
+  drawChart();
 }
 
 const svg = document.getElementById("chart");
 const tip = document.getElementById("tip");
-const H = 220;
+const H = 240;
 const PAD = { top: 26, right: 8, bottom: 26, left: 36 };
 
-let series = "pm25"; // which sensor the history chart shows
-const histories = {}; // sensor key → [{ ts, v }], fetched once per page load
-let points = [];
-let plot = null; // { x(i), y(v), i(px), w, h }
+let chartPoints = [];
+let plot = null; // { x(i), y(v), i(px) }
 
 function drawChart() {
   hideTip();
   const W = svg.clientWidth || 560;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
 
-  points = (histories[series] ?? []).filter((p) => typeof p.v === "number");
-  if (points.length < 2) {
+  chartPoints = points(series);
+  if (chartPoints.length < 2) {
     plot = null;
-    svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="14" stroke="none"
+    svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="14"
       fill="currentColor" opacity=".5">${t?.chart.empty ?? ""}</text>`;
     return;
   }
 
   // 1 unit of headroom so the week's peak (and trough) never touches the edge.
-  const { unit, zero } = SERIES[series];
-  const values = points.map((p) => p.v);
+  const { unit, zero } = UNITS[series];
+  const values = chartPoints.map((p) => p.v);
   const { step, bottom, top } = niceRange(zero ? 0 : Math.min(...values) - 1, Math.max(...values) + 1);
   const w = W - PAD.left - PAD.right;
   const h = H - PAD.top - PAD.bottom;
-  const n = points.length;
+  const n = chartPoints.length;
 
   plot = {
-    w,
-    h,
     x: (i) => PAD.left + (i / (n - 1)) * w,
     y: (v) => PAD.top + h - ((v - bottom) / (top - bottom)) * h,
     i: (px) => Math.min(n - 1, Math.max(0, Math.round(((px - PAD.left) / w) * (n - 1)))),
   };
 
   const grid = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
-    stroke="var(--chart-grid-color)" stroke-width="1"/>`;
+    stroke="var(--grid)" stroke-width="1"/>`;
   const label = (x, y, text, anchor) => `<text x="${x}" y="${y}" text-anchor="${anchor}"
-    font-size="12" fill="var(--secondary-text-color)" stroke="none">${text}</text>`;
+    font-size="11" fill="var(--muted)">${text}</text>`;
 
-  // Unit sits above the y axis, the way the HA history chart labels it.
-  let svgText = label(PAD.left - 4, 12, unit, "start");
+  let svgText = "";
+
+  // PM2.5 gets its air quality levels shaded behind the line, so the week reads as levels.
+  if (series === "pm25") {
+    const clampY = (v) => Math.max(PAD.top, Math.min(PAD.top + h, plot.y(v)));
+    let lo = 0;
+    for (const band of CATEGORIES) {
+      if (lo >= top) break;
+      const y1 = clampY(Math.min(band.max, top));
+      svgText += `<rect x="${PAD.left}" y="${y1}" width="${w}" height="${clampY(lo) - y1}"
+        fill="${band.bg}" opacity=".18"/>`;
+      lo = band.max;
+    }
+  }
+
+  // Unit sits above the y axis.
+  svgText += label(PAD.left - 4, 12, unit, "start");
 
   for (let v = bottom; v <= top + 1e-9; v += step) {
     const y = plot.y(v);
-    svgText += grid(PAD.left, y, W - PAD.right, y)
-      + label(PAD.left - 8, y + 4, +v.toFixed(1), "end");
+    svgText += grid(PAD.left, y, W - PAD.right, y) + label(PAD.left - 8, y + 4, +v.toFixed(1), "end");
   }
 
-  // Five dated ticks, each with a vertical gridline, as in the HA chart.
+  // Five dated ticks, each with a vertical gridline.
   const every = Math.ceil((n - 1) / 4);
   const fmt = { day: "numeric", month: "short" };
   for (let i = 0; i < n; i += every) {
     const x = plot.x(i);
     svgText += grid(x, PAD.top, x, PAD.top + h)
-      + label(x, H - 8, new Date(points[i].ts).toLocaleDateString(undefined, fmt), "middle");
+      + label(x, H - 8, new Date(chartPoints[i].ts).toLocaleDateString(t?.locale, fmt), "middle");
   }
 
-  // The polyline inherits `stroke` from #chart, which the dark media query swaps.
-  const line = points.map((p, i) => `${plot.x(i).toFixed(1)},${plot.y(p.v).toFixed(1)}`).join(" ");
+  const line = chartPoints.map((p, i) => `${plot.x(i).toFixed(1)},${plot.y(p.v).toFixed(1)}`).join(" ");
   svgText += `
-    <polyline points="${line}" fill="none"
+    <polyline points="${line}" fill="none" stroke="var(--line)"
       stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <line id="guide" y1="${PAD.top}" y2="${PAD.top + h}" stroke="var(--secondary-text-color)"
-      opacity=".5" stroke-width="1" hidden/>
-    <circle id="dot" r="4" stroke="var(--card-background-color)" stroke-width="2" hidden/>`;
+    <line id="guide" y1="${PAD.top}" y2="${PAD.top + h}" stroke="var(--muted)"
+      opacity=".6" stroke-width="1" hidden/>
+    <circle id="dot" r="4.5" fill="var(--line)" stroke="var(--surface)" stroke-width="2" hidden/>`;
   svg.innerHTML = svgText;
 }
 
@@ -528,8 +492,9 @@ function showTip(event) {
   const rect = svg.getBoundingClientRect();
   // viewBox units track CSS pixels, except in the instant between a resize and a redraw.
   const px = (event.clientX - rect.left) * (svg.clientWidth / rect.width);
-  const point = points[plot.i(px)];
-  const x = plot.x(plot.i(px));
+  const i = plot.i(px);
+  const point = chartPoints[i];
+  const x = plot.x(i);
   const y = plot.y(point.v);
 
   const guide = svg.querySelector("#guide");
@@ -542,81 +507,48 @@ function showTip(event) {
   dot.setAttribute("cx", x);
   dot.setAttribute("cy", y);
 
-  const { unit, digits } = SERIES[series];
-  tip.innerHTML = `<b>${point.v.toFixed(digits)}${unit ? ` ${unit}` : ""}</b>${new Date(point.ts)
-    .toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
+  const { unit, tipDigits } = UNITS[series];
+  tip.innerHTML = `<b>${point.v.toFixed(tipDigits)}${unit ? ` ${unit}` : ""}</b>${new Date(point.ts)
+    .toLocaleString(t.locale, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
   tip.hidden = false;
-  // Clamp so the tooltip never hangs off either edge of the card.
+  // Clamp so the tooltip never hangs off either edge of the chart card.
   const half = tip.offsetWidth / 2;
-  tip.style.left = `${Math.min(Math.max(x, half), svg.clientWidth - half)}px`;
-  tip.style.top = `${y - 10}px`;
+  const offset = svg.offsetLeft;
+  tip.style.left = `${offset + Math.min(Math.max(x, half), svg.clientWidth - half)}px`;
+  tip.style.top = `${svg.offsetTop + y - 10}px`;
 }
 
-// The legend is derived from CATEGORIES, so changing a breakpoint updates both the
-// hero colour and this table. Only the open-ended top band needs special casing.
-const scale = document.getElementById("scale");
-
-function drawScaleRows() {
-  document.getElementById("scale-rows").innerHTML = CATEGORIES
-    .map((band, i) => {
-      const pmLo = i === 0 ? 0 : Number((CATEGORIES[i - 1].max + 0.1).toFixed(1));
-      const open = !Number.isFinite(band.max);
-      return `<tr>
-        <td><span class="band"><span class="swatch" style="background:${band.bg}"></span>${t.levels[band.key]}</span></td>
-        <td>${open ? `${usAqi(pmLo)}+` : `${usAqi(pmLo)}–${usAqi(band.max)}`}</td>
-        <td>${open ? `${pmLo}+` : `${pmLo}–${band.max}`}</td>
-      </tr>`;
-    })
-    .join("");
-}
-
-document.getElementById("refresh").innerHTML = icon("refresh");
-document.getElementById("info").innerHTML = icon("info");
-document.getElementById("pm-chart").innerHTML = icon("chartLine");
-document.getElementById("scale-close").innerHTML = icon("close");
-document.getElementById("about-close").innerHTML = icon("close");
-document.getElementById("info").addEventListener("click", () => scale.showModal());
-
-// Tiles are re-rendered on every load, so listen on their containers.
-const about = document.getElementById("about");
-for (const id of ["primary", "secondary"]) {
-  document.getElementById(id).addEventListener("click", (e) => {
-    // Chart buttons share the .about corner styling but not this dialog.
-    const key = e.target.closest(".about:not(.chart-btn)")?.dataset.key;
-    if (!key) return;
-    setText("about-title", t.sensors[key]);
-    setText("about-text", t.about[key]);
-    about.showModal();
-  });
-}
-
-// Chart buttons in the hero and tiles switch the history chart to that sensor.
-document.addEventListener("click", async (e) => {
-  const key = e.target.closest(".chart-btn")?.dataset.key;
-  if (!key) return;
-  if (!histories[key]) {
-    const res = await fetch(`/api/history?sensor=${key}`);
-    if (!res.ok) {
-      setText("sec-history", fill(t.apiError, { status: res.status }));
-      return;
-    }
-    histories[key] = await res.json();
-  }
+function selectSeries(key) {
   series = key;
   applyStrings();
-  if (latest) render(latest); else drawChart();
+  if (latest) render(); else drawChart();
+}
+
+document.getElementById("rows").addEventListener("click", (e) => {
+  const about = e.target.closest("[data-about]");
+  if (about) {
+    open = open === about.dataset.about ? null : about.dataset.about;
+    renderRows(latest);
+    return;
+  }
+  const row = e.target.closest("tr.row");
+  if (!row) return;
+  selectSeries(row.dataset.key);
   document.getElementById("sec-history").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
-// A native dialog closes on Esc and on the close button; add click-outside.
-for (const dialog of [scale, about]) {
-  dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
-}
+document.getElementById("tabs").addEventListener("click", (e) => {
+  const key = e.target.closest("button")?.dataset.key;
+  if (key) selectSeries(key);
+});
 
 svg.addEventListener("pointermove", showTip);
 svg.addEventListener("pointerdown", showTip);
 svg.addEventListener("pointerleave", hideTip);
 new ResizeObserver(drawChart).observe(svg);
+
+const showFailure = () => setText("headline",
+  failure.net ? t.netError : fill(t.apiError, { status: failure.status }));
 
 async function setLanguage(next) {
   const res = await fetch(`i18n/${next}.json`);
@@ -627,10 +559,10 @@ async function setLanguage(next) {
     localStorage.setItem(STORED, next);
   } catch { /* nothing to remember it with; the page still works */ }
   applyStrings();
-  // #cat holds whichever of the three states we are in, and only render() owns the third.
+  // The headline holds whichever of the three states we are in, and only render() owns the third.
   if (failure) showFailure();
-  else if (latest) render(latest);
-  else setText("cat", t.loading);
+  else if (latest) render();
+  else setText("headline", t.loading);
 }
 
 document.getElementById("lang").addEventListener("click", () => {
@@ -642,7 +574,7 @@ async function load() {
   // Disabled rather than hidden, so a second click cannot land and the focus ring stays put.
   refresh.disabled = true;
   failure = null;
-  setText("cat", t.loading);
+  setText("headline", t.loading);
 
   let res = null;
   try {
@@ -659,7 +591,7 @@ async function load() {
   refresh.disabled = false;
   if (failure) return showFailure();
   // Outside every guard: a bug in here must throw for real, not read as an outage.
-  render(latest);
+  render();
 }
 
 document.getElementById("refresh").addEventListener("click", load);

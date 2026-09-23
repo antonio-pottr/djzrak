@@ -1,18 +1,10 @@
-public/index.html reproduces design values and icon artwork from two upstream
-projects, both under the Apache License, Version 2.0:
+public/index.html reproduces icon artwork from one upstream project under the
+Apache License, Version 2.0:
 http://www.apache.org/licenses/LICENSE-2.0
-
-Home Assistant frontend
-  https://github.com/home-assistant/frontend
-  Typography, spacing and radius token names and values from
-  src/resources/theme/typography.globals.ts and core.globals.ts; the surface,
-  text, divider and state-icon colours from color/color.globals.ts; and the
-  Observable10 first colour (#4269d0) used by the history chart.
 
 Material Design Icons — Pictogrammers
   https://github.com/Templarian/MaterialDesign
-  Path data for mdi:molecule, mdi:heat-wave, mdi:thermometer and
-  mdi:water-percent, inlined in the ICONS map.
+  Path data for mdi:information-outline, inlined as INFO_ICON.
 
 The AQI category tones in public/aqi.js are original, derived from the US EPA
 PM2.5 breakpoints (public domain) and re-toned to Material 3 container /

@@ -1,7 +1,7 @@
 // node test.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { aqi, usAqi, ALL_TONES } from "./public/aqi.js";
+import { aqi, usAqi, ALL_TONES, CATEGORIES } from "./public/aqi.js";
 import { niceRange } from "./public/scale.js";
 
 const label = (pm) => aqi(pm).key;
@@ -77,15 +77,24 @@ assert.ok(usAqi(9.0) <= 50);
 assert.equal(aqi(9.1).key, "moderate");
 assert.ok(usAqi(9.1) > 50);
 
-// The chart line is HA's Observable10 blue on an ha-card, in both themes.
-assert.ok(contrast("#4269d0", "#ffffff") >= 3, "chart line on a light card");
-assert.ok(contrast("#97bbf5", "#1c1c1c") >= 3, "chart line on a dark card");
-assert.ok(contrast("#5f6368", "#ffffff") >= 4.5, "secondary text on a light card");
-assert.ok(contrast("#9b9b9b", "#1c1c1c") >= 4.5, "secondary text on a dark card");
-// The history note and the retry button sit on the page, not on a card, and #retry borrows
-// the same colour for its border — which WCAG 1.4.11 holds to 3:1 as a control boundary.
-assert.ok(contrast("#5f6368", "#f7f7f8") >= 4.5, "secondary text on the light page");
-assert.ok(contrast("#9b9b9b", "#111111") >= 4.5, "secondary text on the dark page");
+// index.html's palette, both themes. Muted text sits on the page and on the table's selected
+// row (--surface); the chart line and sparklines on --surface need 3:1 as graphics.
+const THEMES = {
+  light: { bg: "#faf8f4", surface: "#ffffff", text: "#1d1b18", muted: "#6b665d", line: "#2d5b8a" },
+  dark: { bg: "#171614", surface: "#1f1d1a", text: "#efebe4", muted: "#a39d92", line: "#8fb8e3" },
+};
+const pageSrc = readFileSync("./public/index.html", "utf8");
+for (const [name, c] of Object.entries(THEMES)) {
+  for (const [token, hex] of Object.entries(c)) {
+    // A palette edit in index.html that skips this table would leave the checks below stale.
+    assert.ok(pageSrc.includes(`--${token}: ${hex};`), `${name} --${token} is no longer ${hex} in index.html`);
+  }
+  for (const ground of ["bg", "surface"]) {
+    assert.ok(contrast(c.text, c[ground]) >= 4.5, `${name}: text on --${ground}`);
+    assert.ok(contrast(c.muted, c[ground]) >= 4.5, `${name}: muted text on --${ground}`);
+    assert.ok(contrast(c.line, c[ground]) >= 3, `${name}: chart line on --${ground}`);
+  }
+}
 
 // Translations. A key present in one file and missing from the other renders as
 // "undefined" on the page, so compare the full nested key sets rather than eyeballing.
@@ -116,7 +125,12 @@ for (const [code, table] of Object.entries(strings)) {
   assert.match(table.about.open, /\{name\}/, `${code}.json about.open needs {name}`);
   assert.match(table.sections.history, /\{name\}/, `${code}.json sections.history needs {name}`);
   assert.match(table.chart.aria, /\{name\}/, `${code}.json chart.aria needs {name}`);
-  assert.match(table.chart.open, /\{name\}/, `${code}.json chart.open needs {name}`);
+  // The page splits the headline on {level} to wrap the verdict in a <mark>, so exactly one.
+  assert.equal(table.headline.split("{level}").length, 2, `${code}.json headline needs one {level}`);
+  // noData never reaches the headline; every other level does.
+  for (const band of CATEGORIES) {
+    assert.ok(table.verdict[band.key], `${code}.json is missing verdict.${band.key}`);
+  }
   assert.ok(table.locale, `${code}.json needs a locale for date formatting`);
   for (const path of paths(table)) {
     const value = path.split(".").reduce((o, k) => o[k], table);
@@ -124,10 +138,9 @@ for (const [code, table] of Object.entries(strings)) {
   }
 }
 
-// The Worker's sensor whitelist and the page's chart buttons must agree — a sensor
-// the page offers but the Worker rejects renders a broken chart.
+// The Worker's sensor whitelist and the page's sensor table must agree — a sensor the page
+// lists but the Worker never sends renders an empty row and chart.
 const workerSrc = readFileSync("./src/db.js", "utf8");
-const pageSrc = readFileSync("./public/index.html", "utf8");
 
 // Renaming either array should say so, not throw on a null match.
 const arrayBody = (src, where, name) => {
@@ -139,15 +152,21 @@ const arrayBody = (src, where, name) => {
 const workerSensors = [...arrayBody(workerSrc, "src/db.js", "SENSORS").matchAll(/"(\w+)"/g)]
   .map((m) => m[1]);
 
-const pageKeys = (name) =>
-  [...arrayBody(pageSrc, "index.html", name).matchAll(/\["(\w+)"/g)].map((m) => m[1]);
-// The hero's pm25 chart button is hardcoded in the HTML rather than listed in an array.
-const pageSensors = ["pm25", ...pageKeys("PRIMARY"), ...pageKeys("SECONDARY")];
+const pageSensors =
+  [...arrayBody(pageSrc, "index.html", "SENSORS").matchAll(/\["(\w+)"/g)].map((m) => m[1]);
 
 assert.deepEqual(
   pageSensors.slice().sort(), workerSensors.slice().sort(),
-  "index.html chart buttons and src/db.js SENSORS do not have the same sensor set",
+  "index.html SENSORS and src/db.js SENSORS do not have the same sensor set",
 );
+
+// Every sensor row has an (i) that unfolds its explanation.
+for (const [code, table] of Object.entries(strings)) {
+  for (const key of pageSensors) {
+    assert.ok(table.about[key], `${code}.json is missing about.${key}`);
+    assert.ok(table.sensors[key], `${code}.json is missing sensors.${key}`);
+  }
+}
 
 // D1 bills the temp b-tree that a GROUP BY on an expression builds: twice the rows for the
 // same answer, which is what put an earlier version of this 16% over the 5M/day cap. The rows

@@ -1,5 +1,5 @@
 // Routing only: parse the request, call db.js, shape the response.
-import { SENSORS, insertReading, latestReading, sensorHistory } from "./db.js";
+import { insertReading, latestReading, weekHistory } from "./db.js";
 
 // A refresh is the only way to get new data, so it must never come from the browser's cache.
 const CACHE = { "cache-control": "no-store" };
@@ -23,18 +23,8 @@ export default {
     }
 
     if (url.pathname === "/api/data") {
-      const [latest, history] = await Promise.all([
-        latestReading(env),
-        sensorHistory(env, "pm25"),
-      ]);
+      const [latest, history] = await Promise.all([latestReading(env), weekHistory(env)]);
       return Response.json({ ...latest, history }, { headers: CACHE });
-    }
-
-    if (url.pathname === "/api/history") {
-      const sensor = url.searchParams.get("sensor");
-      if (!SENSORS.includes(sensor))
-        return new Response(`unknown sensor: use one of ${SENSORS.join(", ")}`, { status: 400 });
-      return Response.json(await sensorHistory(env, sensor), { headers: CACHE });
     }
 
     return new Response("not found", { status: 404 });

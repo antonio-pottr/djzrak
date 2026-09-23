@@ -1,26 +1,50 @@
 {
   "locale": "en-GB",
   "title": "Air Quality — Đakovo",
-  "heading": "Outdoor air quality",
-  "location": "Đakovo, Croatia",
+  "brand": "Đakovo air",
   "loading": "Loading…",
   "apiError": "API error {status}",
   "netError": "Cannot reach the server",
-  "refresh": "Refresh data",
-  "pmUnit": "µg/m³ PM2.5",
+  "refresh": "Refresh",
+  "headline": "The air in Đakovo is {level} right now.",
+  "noReadings": "No readings yet",
+  "pmNow": "PM2.5 now",
   "usAqi": "US AQI {value}",
   "updated": "Updated {time}",
-  "noReadings": "No readings yet",
+  "range24h": "PM2.5 last 24 h, µg/m³",
   "switch": {
     "label": "HR",
     "aria": "Switch to Croatian"
   },
+  "verdict": {
+    "good": "good",
+    "moderate": "moderate",
+    "sensitive": "unhealthy for sensitive groups",
+    "unhealthy": "unhealthy",
+    "veryUnhealthy": "very unhealthy",
+    "hazardous": "hazardous"
+  },
+  "scale": {
+    "aria": "Where the reading sits on the US AQI scale",
+    "more": "How the levels are defined",
+    "colLevel": "Level",
+    "colAqi": "US AQI",
+    "colPm": "PM2.5 µg/m³",
+    "note": "Levels follow the US EPA AQI for PM2.5, May 2024 revision — the same scale IQAir uses. The big number on this page is the raw concentration in µg/m³, which is what IQAir's station map plots; the US AQI under it is that concentration converted to the index, which is what IQAir Earth and their city pages show."
+  },
   "sections": {
-    "particulates": "Particulates",
-    "sensor": "Outdoor sensor",
-    "history": "{name} history",
-    "historyNote": "A reading every 5 minutes",
-    "map": "Regional wind"
+    "sensors": "Every sensor",
+    "sensorsNote": "Tap a row for its 7-day chart, or the (i) for what it measures.",
+    "history": "{name}, the past week",
+    "historyNote": "A reading every 5 minutes. On PM2.5 the shaded bands are the air quality levels.",
+    "map": "Regional wind",
+    "mapNote": "Where the smoke is coming from, and where it is going."
+  },
+  "table": {
+    "sensor": "Sensor",
+    "now": "Now",
+    "day": "Last 24 h",
+    "week": "7 days"
   },
   "sensors": {
     "pm25": "PM2.5",
@@ -43,27 +67,20 @@
   "chart": {
     "aria": "{name} sampled every 5 minutes over the last 7 days",
     "empty": "Not enough history yet",
-    "open": "Show {name} history"
+    "tabs": "Sensor to chart"
   },
   "map": {
     "title": "Windy animated wind map centred on Đakovo"
   },
-  "dialog": {
-    "open": "What the air quality levels mean",
-    "title": "Air quality levels",
-    "close": "Close",
-    "colLevel": "Level",
-    "colAqi": "US AQI",
-    "colPm": "PM2.5 µg/m³",
-    "note": "Levels follow the US EPA AQI for PM2.5, May 2024 revision — the same scale IQAir uses. The big number on this page is the raw concentration in µg/m³, which is what IQAir's station map plots; the chip beside it is that concentration converted to the US AQI index, which is what IQAir Earth and their city pages show."
-  },
   "about": {
     "open": "What {name} means",
+    "pm25": "Mass of particles smaller than 2.5 µm per cubic metre of air: smoke from wood stoves and traffic, plus fine dust. The air quality level at the top of the page is based on this reading. Measured by a Sensirion SPS30 laser-scattering sensor, with a precision of ±10 µg/m³ below 100 µg/m³ and ±10 % above.",
     "pm10": "Mass of all particles up to 10 µm across, per cubic metre of air: dust, pollen, soot, road and construction dust. Measured by a Sensirion SPS30, which counts particles in a laser beam and converts the count to mass. The SPS30 sees particles below 10 µm directly and estimates the coarse end, so treat PM10 as ±25 µg/m³ below 100 µg/m³ and ±25 % above.",
     "pm1": "Mass of particles smaller than 1 µm, per cubic metre of air. These are mostly smoke from wood stoves, traffic and fires, and they reach deepest into the lungs. Measured by a Sensirion SPS30 laser-scattering sensor, with a precision of ±10 µg/m³ below 100 µg/m³ and ±10 % above.",
     "voc": "Volatile organic compounds (solvents, smoke, cooking, exhaust) from a Sensirion SGP41 gas sensor. This is an index from 1 to 500, not a concentration. The sensor learns its own average over the past hours and calls it 100. Below 100 the air is cleaner than usual, and above 100 it is worse (200 means about twice the usual level). It shows change over time and can't be compared between sensors.",
     "nox": "Nitrogen oxides (NO, NO₂) from burning: traffic, heating, gas appliances. This comes from the same Sensirion SGP41 sensor as an index from 1 to 500. Unlike the VOC Index, 1 is normal here, and anything above 1 means combustion gases above the usual background. It shows change over time, not a concentration.",
     "temp": "Air temperature from a Sensirion SHT4x sensor, typically accurate to ±0.2 °C. The same reading corrects the SGP41 gas measurements. Placement matters: direct sun or a warm wall makes any air thermometer read high.",
     "hum": "Relative humidity from the same Sensirion SHT4x sensor, typically accurate to ±1.8 %RH. It also corrects the gas readings. In fog or above about 85 % humidity, water droplets can make the particle readings look higher than they are."
-  }
+  },
+  "footer": "Sensors: Sensirion SPS30 (particles), SGP41 (VOC, NOx), SHT4x (temperature, humidity). Levels: US EPA AQI for PM2.5, May 2024."
 }
