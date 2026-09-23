@@ -120,4 +120,66 @@ for (const [code, table] of Object.entries(strings)) {
   }
 }
 
-console.log(`aqi + scale + contrast + i18n (${LANGS.join(", ")}) ok`);
+// The Worker's sensor whitelist and the page's chart buttons must agree — a sensor
+// the page offers but the Worker rejects renders a broken chart.
+const workerSrc = readFileSync("./src/db.js", "utf8");
+const pageSrc = readFileSync("./public/index.html", "utf8");
+
+// Renaming either array should say so, not throw on a null match.
+const arrayBody = (src, where, name) => {
+  const found = src.match(new RegExp(`const ${name} = \\[([\\s\\S]*?)\\];`));
+  assert.ok(found, `${where} no longer declares const ${name} — update this check`);
+  return found[1];
+};
+
+const workerSensors = [...arrayBody(workerSrc, "src/db.js", "SENSORS").matchAll(/"(\w+)"/g)]
+  .map((m) => m[1]);
+
+const pageKeys = (name) =>
+  [...arrayBody(pageSrc, "index.html", name).matchAll(/\["(\w+)"/g)].map((m) => m[1]);
+// The hero's pm25 chart button is hardcoded in the HTML rather than listed in an array.
+const pageSensors = ["pm25", ...pageKeys("PRIMARY"), ...pageKeys("SECONDARY")];
+
+assert.deepEqual(
+  pageSensors.slice().sort(), workerSensors.slice().sort(),
+  "index.html chart buttons and src/db.js SENSORS do not have the same sensor set",
+);
+
+// Two free-tier caps, and the inputs to both live outside this file: the cron sets how many
+// times a day the table is scanned, the sensor's push interval sets how many rows each scan
+// covers. Read them back rather than restating them, so editing either fails here.
+const { sensorsDueAt } = await import("./src/history.js");
+
+const cron = readFileSync("./wrangler.jsonc", "utf8").match(/"crons":\s*\[\s*"([^"]+)"/);
+assert.ok(cron, "wrangler.jsonc: no triggers.crons, so scheduled() never runs");
+const every = cron[1].match(/^\*\/(\d+) \* \* \* \*$/);
+assert.ok(every, `the budget below assumes an every-N-minutes cron, got "${cron[1]}"`);
+const STEP = Number(every[1]);
+
+const sensorYaml = readFileSync("../air-quality-sensor.yaml", "utf8");
+// The SPS30's pm_2_5 is what fires push_reading, so its update_interval sets the row count.
+const sps30 = sensorYaml.slice(sensorYaml.indexOf("platform: sps30"));
+const push = sps30.match(/update_interval:\s*(\d+)s/);
+assert.ok(push, "air-quality-sensor.yaml: no update_interval under platform: sps30");
+const PERIOD = Number(push[1]) * 1000;
+
+let writes = 0;
+let scans = 0;
+for (let m = 0; m < 24 * 60; m += STEP) {
+  writes += sensorsDueAt(Date.UTC(2026, 0, 1, 0, m)).length;
+  scans++;
+}
+const rows = scans * (7 * 864e5 / PERIOD); // every refresh scans the whole week
+
+assert.ok(writes <= 1000,
+  `a ${STEP}-minute cron writes ${writes} KV keys a day, over the 1,000 cap`);
+assert.ok(rows <= 5e6, `a ${STEP}-minute cron over a ${PERIOD / 1000}s push interval reads `
+  + `${(rows / 1e6).toFixed(2)}M D1 rows a day, over 5M`);
+
+// Only the half hour pulls the six sensors that sit behind a chart button.
+assert.deepEqual(sensorsDueAt(Date.UTC(2026, 0, 1, 12, 30)).slice().sort(),
+  workerSensors.slice().sort());
+assert.deepEqual(sensorsDueAt(Date.UTC(2026, 0, 1, 12, 5)), ["pm25"]);
+
+console.log(
+  `aqi + scale + contrast + i18n (${LANGS.join(", ")}) + sensor whitelist + kv budget ok`);

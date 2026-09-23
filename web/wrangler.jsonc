@@ -16,5 +16,17 @@
 	],
 	"observability": {
 		"enabled": true
-	}
+	},
+	// Drives scheduled() in src/index.js. Every firing refreshes pm25, every sixth refreshes
+	// all seven sensors — this schedule is what sets the KV write budget.
+	"triggers": {
+		"crons": ["*/5 * * * *"]
+	},
+	// src/history.js reads env.KV, so the binding has to be KV.
+	"kv_namespaces": [
+		{
+			"binding": "KV",
+			"id": "51fa3ad160ac4fdf85608db2e27342d2"
+		}
+	]
 }

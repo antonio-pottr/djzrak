@@ -1,16 +1,10 @@
-const WEEK = 7 * 864e5;
-const CACHE = { "cache-control": "public, max-age=60" };
-// Keys the sensor posts (air-quality-sensor.yaml push_reading). The whitelist is what
-// keeps the query param out of the json_extract path.
-const SENSORS = ["pm25", "pm10", "pm1", "voc", "nox", "temp", "hum"];
+// Routing only: parse the request, call a service, shape the response.
+import { SENSORS, insertReading, latestReading } from "./db.js";
+import { readHistory, refreshHistories } from "./history.js";
 
-// 5-minute averages, matching the sensor's 60s push: ~2016 points for a week.
-// json_extract reads straight out of the blob, so adding a sensor never needs a migration.
-const historyQuery = (env, sensor) => env.DB.prepare(`
-  SELECT ts / 300000 * 300000 AS ts,
-         ROUND(AVG(json_extract(data, ?)), 1) AS v
-  FROM readings WHERE ts > ? GROUP BY 1 HAVING v IS NOT NULL ORDER BY 1`)
-  .bind(`$.${sensor}`, Date.now() - WEEK);
+// A refresh is the only way to get new data, so it must never come from the browser's
+// cache. Edge-side caching is unaffected: KV keeps its own cacheTtl.
+const CACHE = { "cache-control": "no-store" };
 
 export default {
   async fetch(req, env) {
@@ -26,38 +20,31 @@ export default {
       if (!body || typeof body.pm25 !== "number" || !Number.isFinite(body.pm25))
         return new Response("bad payload: pm25 must be a finite number", { status: 400 });
 
-      const ts = Date.now();
-      await env.DB.batch([
-        env.DB.prepare("INSERT OR REPLACE INTO readings (ts, data) VALUES (?, ?)")
-          .bind(ts, JSON.stringify(body)),
-        env.DB.prepare("DELETE FROM readings WHERE ts < ?").bind(ts - WEEK),
-      ]);
+      await insertReading(env, Date.now(), body);
       return new Response("ok");
     }
 
     if (url.pathname === "/api/data") {
-      const [now, history] = await env.DB.batch([
-        env.DB.prepare("SELECT ts, data FROM readings ORDER BY ts DESC LIMIT 1"),
-        historyQuery(env, "pm25"),
+      const [latest, history] = await Promise.all([
+        latestReading(env),
+        readHistory(env, "pm25"),
       ]);
-      return Response.json(
-        {
-          now: now.results.length ? JSON.parse(now.results[0].data) : null,
-          updated: now.results[0]?.ts ?? null,
-          history: history.results,
-        },
-        { headers: CACHE },
-      );
+      return Response.json({ ...latest, history }, { headers: CACHE });
     }
 
     if (url.pathname === "/api/history") {
       const sensor = url.searchParams.get("sensor");
       if (!SENSORS.includes(sensor))
         return new Response(`unknown sensor: use one of ${SENSORS.join(", ")}`, { status: 400 });
-      const { results } = await historyQuery(env, sensor).all();
-      return Response.json(results, { headers: CACHE });
+      return Response.json(await readHistory(env, sensor), { headers: CACHE });
     }
 
     return new Response("not found", { status: 404 });
+  },
+
+  // triggers.crons in wrangler.jsonc. Rebuilding here rather than on ingest keeps the write
+  // budget tied to the schedule instead of to how often the sensor happens to push.
+  async scheduled(event, env) {
+    await refreshHistories(env, event.scheduledTime);
   },
 };
