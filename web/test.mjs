@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { aqi, usAqi, ALL_TONES } from "./public/aqi.js";
-import { niceMax } from "./public/scale.js";
+import { niceRange } from "./public/scale.js";
 
 const label = (pm) => aqi(pm).key;
 
@@ -22,16 +22,19 @@ assert.equal(label(undefined), "noData");
 assert.equal(label(NaN), "noData");
 assert.equal(label("12"), "noData");
 
-// A step of 0, NaN or undefined hangs the gridline loop, so check the whole range.
-for (const max of [0, 0.4, 1, 12, 13, 37, 99, 100, 250, 999, 4000, 1e6]) {
-  const { step, top } = niceMax(max);
-  assert.ok(step > 0 && Number.isFinite(step), `step for ${max}: ${step}`);
-  assert.ok(top >= max, `top ${top} must cover ${max}`);
-  assert.ok(top / step <= 10, `too many gridlines for ${max}: ${top / step}`);
+// A step of 0, NaN or undefined hangs the gridline loop, so check the whole range,
+// including below-zero temperatures and flat series where lo === hi.
+for (const [lo, hi] of [[0, 0], [0, 0.4], [0, 12], [0, 37], [0, 999], [0, 1e6],
+  [-8, -3], [-3, 4], [18, 18], [99, 104], [35, 90]]) {
+  const { step, bottom, top } = niceRange(lo, hi);
+  assert.ok(step > 0 && Number.isFinite(step), `step for ${lo}..${hi}: ${step}`);
+  assert.ok(bottom <= lo && top >= hi, `${bottom}..${top} must cover ${lo}..${hi}`);
+  assert.ok((top - bottom) / step <= 10, `too many gridlines for ${lo}..${hi}`);
 }
 
-assert.deepEqual(niceMax(12), { step: 5, top: 15 });
-assert.deepEqual(niceMax(100), { step: 25, top: 100 });
+assert.deepEqual(niceRange(0, 12), { step: 5, bottom: 0, top: 15 });
+assert.deepEqual(niceRange(0, 100), { step: 25, bottom: 0, top: 100 });
+assert.deepEqual(niceRange(-3, 4), { step: 2, bottom: -4, top: 4 });
 
 // WCAG 2.1 relative luminance and contrast ratio.
 const luminance = (hex) => {
@@ -107,6 +110,9 @@ for (const [code, table] of Object.entries(strings)) {
   assert.match(table.updated, /\{time\}/, `${code}.json updated needs {time}`);
   assert.match(table.apiError, /\{status\}/, `${code}.json apiError needs {status}`);
   assert.match(table.about.open, /\{name\}/, `${code}.json about.open needs {name}`);
+  assert.match(table.sections.history, /\{name\}/, `${code}.json sections.history needs {name}`);
+  assert.match(table.chart.aria, /\{name\}/, `${code}.json chart.aria needs {name}`);
+  assert.match(table.chart.open, /\{name\}/, `${code}.json chart.open needs {name}`);
   assert.ok(table.locale, `${code}.json needs a locale for date formatting`);
   for (const path of paths(table)) {
     const value = path.split(".").reduce((o, k) => o[k], table);

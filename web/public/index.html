@@ -112,13 +112,15 @@
   #hero { position: relative; padding: clamp(20px, 5vw, 32px); text-align: center;
           border-color: transparent;
           background: var(--tone-bg); color: var(--tone-ink); }
-  #info { position: absolute; top: var(--ha-space-2); right: var(--ha-space-2);
+  #info { right: var(--ha-space-2); }
+  #pm-chart { right: auto; left: var(--ha-space-2); }
+  #info, #pm-chart { position: absolute; top: var(--ha-space-2);
           display: grid; place-items: center; width: 40px; height: 40px;
           border: 0; border-radius: 50%; background: transparent; color: inherit;
           cursor: pointer; }
-  #info:hover { background: rgb(0 0 0 / .1); }
-  #info:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
-  #info svg { width: 22px; height: 22px; fill: currentColor; opacity: .75; }
+  #info:hover, #pm-chart:hover { background: rgb(0 0 0 / .1); }
+  #info:focus-visible, #pm-chart:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+  #info svg, #pm-chart svg { width: 22px; height: 22px; fill: currentColor; opacity: .75; }
 
   /* Native <dialog> gives the backdrop, Esc-to-close and focus trap for free. */
   dialog::backdrop { background: rgb(0 0 0 / .45); }
@@ -155,7 +157,6 @@
 
   /* Small (i) in each tile's corner, opening that sensor's explanation. */
   .tile-center, .tile-row { position: relative; }
-  .tile-row { padding-right: 44px; }
   .about { position: absolute; top: var(--ha-space-1); right: var(--ha-space-1);
            display: grid; place-items: center; width: 36px; height: 36px;
            border: 0; border-radius: 50%; background: transparent; cursor: pointer;
@@ -163,6 +164,11 @@
   .about:hover { background: var(--primary-background-color); }
   .about:focus-visible { outline: 2px solid var(--state-icon-color); outline-offset: -4px; }
   .about .icon { width: 20px; height: 20px; margin: 0; fill: currentColor; }
+  /* Chart button: top-left in centred tiles, under the (i) in row tiles. */
+  .tile-row { padding-right: 44px; }
+  .about.chart-btn { right: auto; left: var(--ha-space-1); }
+  .tile-row .about.chart-btn { left: auto; right: var(--ha-space-1); top: calc(var(--ha-space-1) + 36px); }
+  .chart-btn[aria-pressed="true"] { color: var(--state-icon-color); }
   #pm25 { font-size: clamp(52px, 18vw, 96px); font-weight: var(--ha-font-weight-bold);
           line-height: 1; font-variant-numeric: tabular-nums; }
   #unit { display: flex; justify-content: center; align-items: center; flex-wrap: wrap;
@@ -181,6 +187,8 @@
   #chart { width: 100%; height: clamp(180px, 32vw, 240px); display: block;
            touch-action: pan-y; stroke: var(--chart-line-color); }
   #dot { fill: var(--chart-line-color); }
+  /* The UA's [hidden] rule covers HTML only, so the hover marker needs its own. */
+  #chart [hidden] { display: none; }
   #tip { position: absolute; pointer-events: none; transform: translate(-50%, -100%);
          background: var(--primary-text-color); color: var(--card-background-color);
          font-size: var(--ha-font-size-s); line-height: var(--ha-line-height-condensed);
@@ -221,6 +229,7 @@
 </div>
 
 <div class="card" id="hero">
+  <button id="pm-chart" class="chart-btn" data-key="pm25"></button>
   <button id="info"></button>
   <div id="pm25">–</div>
   <div id="unit"><span id="pm-unit"></span><span id="aqi" hidden></span></div>
@@ -268,7 +277,7 @@
 
 <script type="module">
 import { aqi, usAqi, CATEGORIES } from "./aqi.js";
-import { niceMax } from "./scale.js";
+import { niceRange } from "./scale.js";
 
 // Material Design Icons (Pictogrammers, Apache-2.0) — the same glyphs HA picks for
 // these device classes: mdi:molecule, mdi:heat-wave, mdi:thermometer, mdi:water-percent.
@@ -278,6 +287,7 @@ const ICONS = {
   thermometer: "M15 13V5A3 3 0 0 0 9 5V13A5 5 0 1 0 15 13M12 4A1 1 0 0 1 13 5V8H11V5A1 1 0 0 1 12 4Z",
   info: "M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z",
   close: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
+  chartLine: "M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z",
   humidity: "M12,3.25C12,3.25 6,10 6,14C6,17.32 8.69,20 12,20A6,6 0 0,0 18,14C18,10 12,3.25 12,3.25M14.47,9.97L15.53,11.03L9.53,17.03L8.47,15.97M9.75,10A1.25,1.25 0 0,1 11,11.25A1.25,1.25 0 0,1 9.75,12.5A1.25,1.25 0 0,1 8.5,11.25A1.25,1.25 0 0,1 9.75,10M14.25,14.5A1.25,1.25 0 0,1 15.5,15.75A1.25,1.25 0 0,1 14.25,17A1.25,1.25 0 0,1 13,15.75A1.25,1.25 0 0,1 14.25,14.5Z",
 };
 
@@ -322,21 +332,32 @@ const SECONDARY = [
   ["hum", "%", 0, "humidity"],
 ];
 
+// Unit and precision per charted series. Particulate mass starts its axis at zero;
+// the rest (below-zero temperatures, an index hovering near 100) fit their own range.
+const SERIES = Object.fromEntries([["pm25", "µg/m³", 2], ...PRIMARY, ...SECONDARY]
+  .map(([key, unit, digits]) => [key, { unit, digits: Math.min(digits, 1), zero: unit === "µg/m³" }]));
+
 const value = (now, key, unit, digits) =>
   `${num(now?.[key], digits)}${unit ? ` ${unit}` : ""}`;
 
 const aboutButton = (key) =>
   `<button class="about" data-key="${key}" aria-label="${fill(t.about.open, { name: t.sensors[key] })}">${icon("info")}</button>`;
 
+const chartButton = (key) =>
+  `<button class="about chart-btn" data-key="${key}" aria-pressed="${key === series}"
+    aria-label="${fill(t.chart.open, { name: t.sensors[key] })}">${icon("chartLine")}</button>`;
+
 const tiles = (now, list, shape) => list
   .map(([key, unit, digits, glyph]) => (shape === "center"
     ? `<div class="card tile-center">
+         ${chartButton(key)}
          ${aboutButton(key)}
          ${icon(glyph)}
          <div class="k">${t.sensors[key]}</div>
          <div class="v">${value(now, key, unit, digits)}</div>
        </div>`
     : `<div class="card tile-row">
+         ${chartButton(key)}
          ${aboutButton(key)}
          ${icon(glyph)}
          <div>
@@ -357,7 +378,7 @@ function applyStrings() {
   setText("pm-unit", t.pmUnit);
   setText("sec-particulates", t.sections.particulates);
   setText("sec-sensor", t.sections.sensor);
-  setText("sec-history", t.sections.history);
+  setText("sec-history", fill(t.sections.history, { name: t.sensors[series] }));
   setText("sec-map", t.sections.map);
 
   const langButton = document.getElementById("lang");
@@ -374,7 +395,10 @@ function applyStrings() {
   document.getElementById("about-close").setAttribute("aria-label", t.dialog.close);
   drawScaleRows();
 
-  svg.setAttribute("aria-label", t.chart.aria);
+  svg.setAttribute("aria-label", fill(t.chart.aria, { name: t.sensors[series] }));
+  const pmChart = document.getElementById("pm-chart");
+  pmChart.setAttribute("aria-label", fill(t.chart.open, { name: t.sensors.pm25 }));
+  pmChart.setAttribute("aria-pressed", String(series === "pm25"));
   document.getElementById("map").title = t.map.title;
 }
 
@@ -394,7 +418,7 @@ function render({ now, updated, history }) {
   document.getElementById("primary").innerHTML = tiles(now, PRIMARY, "center");
   document.getElementById("secondary").innerHTML = tiles(now, SECONDARY, "row");
 
-  points = history.filter((p) => typeof p.pm25 === "number");
+  histories.pm25 = history;
   drawChart();
 
   setText("stamp", updated
@@ -407,6 +431,8 @@ const tip = document.getElementById("tip");
 const H = 220;
 const PAD = { top: 26, right: 8, bottom: 26, left: 36 };
 
+let series = "pm25"; // which sensor the history chart shows
+const histories = {}; // sensor key → [{ ts, v }], fetched once per page load
 let points = [];
 let plot = null; // { x(i), y(v), i(px), w, h }
 
@@ -415,15 +441,18 @@ function drawChart() {
   const W = svg.clientWidth || 560;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
 
+  points = (histories[series] ?? []).filter((p) => typeof p.v === "number");
   if (points.length < 2) {
     plot = null;
     svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="14" stroke="none"
-      fill="currentColor" opacity=".5">Not enough history yet</text>`;
+      fill="currentColor" opacity=".5">${t?.chart.empty ?? ""}</text>`;
     return;
   }
 
-  // +1 µg/m³ headroom so the week's peak never touches the top edge.
-  const { step, top } = niceMax(Math.max(...points.map((p) => p.pm25)) + 1);
+  // 1 unit of headroom so the week's peak (and trough) never touches the edge.
+  const { unit, zero } = SERIES[series];
+  const values = points.map((p) => p.v);
+  const { step, bottom, top } = niceRange(zero ? 0 : Math.min(...values) - 1, Math.max(...values) + 1);
   const w = W - PAD.left - PAD.right;
   const h = H - PAD.top - PAD.bottom;
   const n = points.length;
@@ -432,7 +461,7 @@ function drawChart() {
     w,
     h,
     x: (i) => PAD.left + (i / (n - 1)) * w,
-    y: (v) => PAD.top + h - (v / top) * h,
+    y: (v) => PAD.top + h - ((v - bottom) / (top - bottom)) * h,
     i: (px) => Math.min(n - 1, Math.max(0, Math.round(((px - PAD.left) / w) * (n - 1)))),
   };
 
@@ -442,9 +471,9 @@ function drawChart() {
     font-size="12" fill="var(--secondary-text-color)" stroke="none">${text}</text>`;
 
   // Unit sits above the y axis, the way the HA history chart labels it.
-  let svgText = label(PAD.left - 4, 12, "µg/m³", "start");
+  let svgText = label(PAD.left - 4, 12, unit, "start");
 
-  for (let v = 0; v <= top + 1e-9; v += step) {
+  for (let v = bottom; v <= top + 1e-9; v += step) {
     const y = plot.y(v);
     svgText += grid(PAD.left, y, W - PAD.right, y)
       + label(PAD.left - 8, y + 4, +v.toFixed(1), "end");
@@ -460,7 +489,7 @@ function drawChart() {
   }
 
   // The polyline inherits `stroke` from #chart, which the dark media query swaps.
-  const line = points.map((p, i) => `${plot.x(i).toFixed(1)},${plot.y(p.pm25).toFixed(1)}`).join(" ");
+  const line = points.map((p, i) => `${plot.x(i).toFixed(1)},${plot.y(p.v).toFixed(1)}`).join(" ");
   svgText += `
     <polyline points="${line}" fill="none"
       stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
@@ -483,7 +512,7 @@ function showTip(event) {
   const px = (event.clientX - rect.left) * (svg.clientWidth / rect.width);
   const point = points[plot.i(px)];
   const x = plot.x(plot.i(px));
-  const y = plot.y(point.pm25);
+  const y = plot.y(point.v);
 
   const guide = svg.querySelector("#guide");
   guide.removeAttribute("hidden");
@@ -495,7 +524,8 @@ function showTip(event) {
   dot.setAttribute("cx", x);
   dot.setAttribute("cy", y);
 
-  tip.innerHTML = `<b>${point.pm25.toFixed(1)} µg/m³</b>${new Date(point.ts)
+  const { unit, digits } = SERIES[series];
+  tip.innerHTML = `<b>${point.v.toFixed(digits)}${unit ? ` ${unit}` : ""}</b>${new Date(point.ts)
     .toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
   tip.hidden = false;
   // Clamp so the tooltip never hangs off either edge of the card.
@@ -523,6 +553,7 @@ function drawScaleRows() {
 }
 
 document.getElementById("info").innerHTML = icon("info");
+document.getElementById("pm-chart").innerHTML = icon("chartLine");
 document.getElementById("scale-close").innerHTML = icon("close");
 document.getElementById("about-close").innerHTML = icon("close");
 document.getElementById("info").addEventListener("click", () => scale.showModal());
@@ -531,13 +562,32 @@ document.getElementById("info").addEventListener("click", () => scale.showModal(
 const about = document.getElementById("about");
 for (const id of ["primary", "secondary"]) {
   document.getElementById(id).addEventListener("click", (e) => {
-    const key = e.target.closest(".about")?.dataset.key;
+    // Chart buttons share the .about corner styling but not this dialog.
+    const key = e.target.closest(".about:not(.chart-btn)")?.dataset.key;
     if (!key) return;
     setText("about-title", t.sensors[key]);
     setText("about-text", t.about[key]);
     about.showModal();
   });
 }
+
+// Chart buttons in the hero and tiles switch the history chart to that sensor.
+document.addEventListener("click", async (e) => {
+  const key = e.target.closest(".chart-btn")?.dataset.key;
+  if (!key) return;
+  if (!histories[key]) {
+    const res = await fetch(`/api/history?sensor=${key}`);
+    if (!res.ok) {
+      setText("sec-history", fill(t.apiError, { status: res.status }));
+      return;
+    }
+    histories[key] = await res.json();
+  }
+  series = key;
+  applyStrings();
+  if (latest) render(latest); else drawChart();
+  document.getElementById("sec-history").scrollIntoView({ behavior: "smooth", block: "start" });
+});
 
 // A native dialog closes on Esc and on the close button; add click-outside.
 for (const dialog of [scale, about]) {

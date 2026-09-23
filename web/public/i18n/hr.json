@@ -16,10 +16,11 @@
   "sections": {
     "particulates": "Čestice",
     "sensor": "Vanjski senzor",
-    "history": "Povijest PM2.5",
+    "history": "Povijest: {name}",
     "map": "Vjetar u regiji"
   },
   "sensors": {
+    "pm25": "PM2.5",
     "pm10": "PM10",
     "pm1": "PM1.0",
     "voc": "VOC indeks",
@@ -37,9 +38,9 @@
     "noData": "Nema podataka"
   },
   "chart": {
-    "aria": "Prosječne 5-minutne vrijednosti PM2.5 u posljednjih 7 dana",
+    "aria": "Prosječne 5-minutne vrijednosti {name} u posljednjih 7 dana",
     "empty": "Još nema dovoljno povijesti",
-    "unit": "µg/m³"
+    "open": "Prikaži povijest: {name}"
   },
   "map": {
     "title": "Windy animirana karta vjetra sa središtem u Đakovu"

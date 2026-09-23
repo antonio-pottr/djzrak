@@ -1,4 +1,16 @@
 const WEEK = 7 * 864e5;
+const CACHE = { "cache-control": "public, max-age=60" };
+// Keys the sensor posts (air-quality-sensor.yaml push_reading). The whitelist is what
+// keeps the query param out of the json_extract path.
+const SENSORS = ["pm25", "pm10", "pm1", "voc", "nox", "temp", "hum"];
+
+// 5-minute averages, matching the sensor's 60s push: ~2016 points for a week.
+// json_extract reads straight out of the blob, so adding a sensor never needs a migration.
+const historyQuery = (env, sensor) => env.DB.prepare(`
+  SELECT ts / 300000 * 300000 AS ts,
+         ROUND(AVG(json_extract(data, ?)), 1) AS v
+  FROM readings WHERE ts > ? GROUP BY 1 HAVING v IS NOT NULL ORDER BY 1`)
+  .bind(`$.${sensor}`, Date.now() - WEEK);
 
 export default {
   async fetch(req, env) {
@@ -26,12 +38,7 @@ export default {
     if (url.pathname === "/api/data") {
       const [now, history] = await env.DB.batch([
         env.DB.prepare("SELECT ts, data FROM readings ORDER BY ts DESC LIMIT 1"),
-        // 5-minute averages, matching HA's push cadence: ~2016 points for a week.
-        // json_extract reads straight out of the blob, so adding a sensor never needs a migration.
-        env.DB.prepare(`
-          SELECT ts / 300000 * 300000 AS ts,
-                 ROUND(AVG(json_extract(data, '$.pm25')), 1) AS pm25
-          FROM readings WHERE ts > ? GROUP BY 1 ORDER BY 1`).bind(Date.now() - WEEK),
+        historyQuery(env, "pm25"),
       ]);
       return Response.json(
         {
@@ -39,8 +46,16 @@ export default {
           updated: now.results[0]?.ts ?? null,
           history: history.results,
         },
-        { headers: { "cache-control": "public, max-age=60" } },
+        { headers: CACHE },
       );
+    }
+
+    if (url.pathname === "/api/history") {
+      const sensor = url.searchParams.get("sensor");
+      if (!SENSORS.includes(sensor))
+        return new Response(`unknown sensor: use one of ${SENSORS.join(", ")}`, { status: 400 });
+      const { results } = await historyQuery(env, sensor).all();
+      return Response.json(results, { headers: CACHE });
     }
 
     return new Response("not found", { status: 404 });
