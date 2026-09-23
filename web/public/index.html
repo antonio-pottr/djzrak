@@ -81,6 +81,14 @@
   h2 { font-size: var(--ha-font-size-l); font-weight: var(--ha-font-weight-normal);
        line-height: var(--ha-line-height-condensed);
        margin: var(--ha-space-6) 0 var(--ha-space-3); }
+  /* Only shown when a load failed. Nothing retries on its own, so this is the way back. */
+  #retry { margin-top: var(--ha-space-3); padding: var(--ha-space-2) var(--ha-space-4);
+           border: 1px solid var(--divider-color); border-radius: 999px;
+           background: var(--card-background-color); color: var(--primary-text-color);
+           font: inherit; cursor: pointer; }
+  /* Sits tight under its h2, so it reads as part of the heading, not the chart. */
+  #sec-history-note { margin: calc(-1 * var(--ha-space-2)) 0 var(--ha-space-3);
+                      color: var(--secondary-text-color); font-size: var(--ha-font-size-s); }
 
   /* ha-card: white, 12px radius, hairline border, no shadow */
   .card { background: var(--card-background-color);
@@ -235,6 +243,7 @@
   <div id="unit"><span id="pm-unit"></span><span id="aqi" hidden></span></div>
   <div id="cat"></div>
   <div id="stamp"></div>
+  <button id="retry" hidden></button>
 </div>
 
 <dialog id="scale" aria-labelledby="scale-title">
@@ -266,6 +275,7 @@
 <div class="row row-2" id="secondary"></div>
 
 <h2 id="sec-history"></h2>
+<p id="sec-history-note"></p>
 <div class="card" id="chartwrap">
   <svg id="chart" role="img"></svg>
   <div id="tip" hidden></div>
@@ -379,6 +389,8 @@ function applyStrings() {
   setText("sec-particulates", t.sections.particulates);
   setText("sec-sensor", t.sections.sensor);
   setText("sec-history", fill(t.sections.history, { name: t.sensors[series] }));
+  setText("sec-history-note", t.sections.historyNote);
+  setText("retry", t.retry);
   setText("sec-map", t.sections.map);
 
   const langButton = document.getElementById("lang");
@@ -616,19 +628,27 @@ document.getElementById("lang").addEventListener("click", () => {
 });
 
 async function load() {
-  const res = await fetch("/api/data");
-  if (!res.ok) {
-    setText("cat", fill(t.apiError, { status: res.status }));
-    return;
+  const retry = document.getElementById("retry");
+  retry.hidden = true;
+  try {
+    const res = await fetch("/api/data");
+    if (!res.ok) throw new Error(fill(t.apiError, { status: res.status }));
+    latest = await res.json();
+    render(latest);
+  } catch (err) {
+    // Nothing polls any more, so a failed load stays failed until someone asks again.
+    // A thrown fetch never reached the Worker at all, which is a different thing to say.
+    setText("cat", err instanceof TypeError ? t.netError : err.message);
+    retry.hidden = false;
   }
-  latest = await res.json();
-  render(latest);
 }
+
+document.getElementById("retry").addEventListener("click", load);
 
 await setLanguage(lang);
 setText("cat", t.loading);
+// No polling: the page shows when its reading was taken, and a refresh fetches a new one.
 load();
-setInterval(load, 60000);
 </script>
 </body>
 </html>

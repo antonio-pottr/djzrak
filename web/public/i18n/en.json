@@ -5,6 +5,8 @@
   "location": "Đakovo, Croatia",
   "loading": "Loading…",
   "apiError": "API error {status}",
+  "netError": "Cannot reach the server",
+  "retry": "Try again",
   "pmUnit": "µg/m³ PM2.5",
   "usAqi": "US AQI {value}",
   "updated": "Updated {time}",
@@ -17,6 +19,7 @@
     "particulates": "Particulates",
     "sensor": "Outdoor sensor",
     "history": "{name} history",
+    "historyNote": "Averaged in 5-minute intervals",
     "map": "Regional wind"
   },
   "sensors": {

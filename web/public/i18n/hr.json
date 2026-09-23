@@ -5,6 +5,8 @@
   "location": "Đakovo, Hrvatska",
   "loading": "Učitavanje…",
   "apiError": "Greška poslužitelja {status}",
+  "netError": "Poslužitelj nije dostupan",
+  "retry": "Pokušaj ponovno",
   "pmUnit": "µg/m³ PM2.5",
   "usAqi": "US AQI {value}",
   "updated": "Ažurirano {time}",
@@ -17,6 +19,7 @@
     "particulates": "Čestice",
     "sensor": "Vanjski senzor",
     "history": "Povijest: {name}",
+    "historyNote": "Prosjeci u intervalima od 5 minuta",
     "map": "Vjetar u regiji"
   },
   "sensors": {
