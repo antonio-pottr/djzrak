@@ -8,8 +8,6 @@
   "refresh": "Osvježi",
   "headline": "Zrak u Đakovu je trenutno {level}.",
   "noReadings": "Još nema mjerenja",
-  "measured": "Izmjereno {time}",
-  "measuredNow": "Izmjereno upravo sada",
   "usAqi": "US AQI {value}",
   "updated": "Ažurirano {time}",
   "wind": "Vjetar",

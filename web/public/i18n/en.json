@@ -8,8 +8,6 @@
   "refresh": "Refresh",
   "headline": "The air in Đakovo is {level} right now.",
   "noReadings": "No readings yet",
-  "measured": "Measured {time}",
-  "measuredNow": "Measured just now",
   "usAqi": "US AQI {value}",
   "updated": "Updated {time}",
   "wind": "Wind",

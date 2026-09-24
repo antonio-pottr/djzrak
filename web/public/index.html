@@ -54,7 +54,7 @@
   .link:hover { background: var(--surface); }
   .link:disabled { opacity: .5; cursor: default; }
 
-  /* Hero: the sentence, the level-coloured PM2.5 card, and how long ago it was measured.
+  /* Hero: the sentence and the level-coloured PM2.5 card.
      The tone is one IQAir band colour in both themes; test.mjs holds each pair to WCAG AA. */
   h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 6.5vw, 52px);
        line-height: 1.1; margin: 28px 0 16px; letter-spacing: -.01em; text-wrap: balance; }
@@ -66,9 +66,6 @@
          font-size: clamp(72px, 20vw, 128px); line-height: .9; letter-spacing: -.03em; }
   .big small { font-family: var(--sans); font-size: 16px; letter-spacing: 0; opacity: .7; margin-left: 8px; }
   #aqi { font-size: 14px; margin-top: 12px; opacity: .85; font-variant-numeric: tabular-nums; }
-  /* A quiet footnote to the card, right-aligned under its bottom-right corner. Kept light by size,
-     not opacity: --muted is already the lightest grey that holds WCAG AA on this background. */
-  #measured { margin: 6px 2px 0 0; font-size: 11px; color: var(--muted); text-align: right; }
 
   /* The level scale sits right under the card it explains: a bare colour bar with a marker, its
      level names left to the definitions that fold out below. 20px clears the marker, which pokes
@@ -160,7 +157,7 @@
   <span class="actions"><button class="link" id="refresh"></button><button class="link" id="lang"></button></span>
 </header>
 
-<!-- Hero: the sentence, the level-coloured PM2.5 card, how long ago it was measured -->
+<!-- Hero: the sentence, and the level-coloured PM2.5 card with its US AQI -->
 <section id="hero">
   <h1 id="headline" aria-live="polite"></h1>
   <div class="card">
@@ -168,7 +165,6 @@
     <div class="big"><span id="pm25">–</span><small>µg/m³</small></div>
     <div id="aqi"></div>
   </div>
-  <p id="measured"></p>
 </section>
 
 <!-- Level scale: colour bar with marker, fold-out definitions -->
@@ -404,21 +400,6 @@ function windText() {
     style="transform: rotate(${from + 180}deg)">↑</span> ${name}`;
 }
 
-// "4 minutes ago", in the page's language. The page never polls, so a minute timer below keeps
-// this from going stale in a tab left open.
-function renderMeasured() {
-  const updated = latest?.updated;
-  if (!updated) return setText("measured", "");
-  const minutes = Math.round((Date.now() - updated) / 6e4);
-  if (minutes < 1) return setText("measured", t.measuredNow);
-  const rtf = new Intl.RelativeTimeFormat(t.locale, { numeric: "auto" });
-  const ago = minutes < 60 ? rtf.format(-minutes, "minute")
-    : minutes < 1440 ? rtf.format(-Math.round(minutes / 60), "hour")
-    : rtf.format(-Math.round(minutes / 1440), "day");
-  setText("measured", fill(t.measured, { time: ago }));
-}
-setInterval(() => { if (t) renderMeasured(); }, 6e4);
-
 function renderHero({ now, updated }) {
   const pm = now?.pm25;
   const cat = aqi(pm);
@@ -451,7 +432,6 @@ function renderHero({ now, updated }) {
     [`${t.pressure}*`, Number.isFinite(weather?.pressure_msl) ? `${num(weather.pressure_msl, 0)} hPa` : "—"],
   ].map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join("");
 
-  renderMeasured();
   setText("stamp", updated
     ? fill(t.updated, { time: new Date(updated).toLocaleString(t.locale,
       { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) })
