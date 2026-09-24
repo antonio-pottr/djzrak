@@ -11,7 +11,9 @@
   "pmNow": "PM2.5 sada",
   "usAqi": "US AQI {value}",
   "updated": "Ažurirano {time}",
-  "range24h": "PM2.5 zadnja 24 h, µg/m³",
+  "wind": "Vjetar",
+  "pressure": "Tlak zraka",
+  "compass": ["S", "SI", "I", "JI", "J", "JZ", "Z", "SZ"],
   "switch": {
     "label": "EN",
     "aria": "Prebaci na engleski"
@@ -82,5 +84,5 @@
     "temp": "Temperatura zraka sa Sensirion SHT4x senzora, uobičajene točnosti ±0,2 °C. Isto očitanje služi za korekciju mjerenja plinova na SGP41. Položaj je bitan: izravno sunce ili topao zid podižu očitanje svakog termometra.",
     "hum": "Relativna vlažnost s istog Sensirion SHT4x senzora, uobičajene točnosti ±1,8 %RH. Služi i za korekciju mjerenja plinova. Po magli ili iznad otprilike 85 % vlage kapljice vode mogu prikazati više čestica nego što ih zaista ima."
   },
-  "footer": "Senzori: Sensirion SPS30 (čestice), SGP41 (VOC, NOx), SHT4x (temperatura, vlažnost). Razine: US EPA AQI za PM2.5, svibanj 2024."
+  "footer": "Senzori: Sensirion SPS30 (čestice), SGP41 (VOC, NOx), SHT4x (temperatura, vlažnost). Razine: US EPA AQI za PM2.5, svibanj 2024. Vjetar i tlak: Open-Meteo, model ECMWF (CC BY 4.0)."
 }

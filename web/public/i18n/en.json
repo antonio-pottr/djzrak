@@ -11,7 +11,9 @@
   "pmNow": "PM2.5 now",
   "usAqi": "US AQI {value}",
   "updated": "Updated {time}",
-  "range24h": "PM2.5 last 24 h, µg/m³",
+  "wind": "Wind",
+  "pressure": "Pressure",
+  "compass": ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
   "switch": {
     "label": "HR",
     "aria": "Switch to Croatian"
@@ -82,5 +84,5 @@
     "temp": "Air temperature from a Sensirion SHT4x sensor, typically accurate to ±0.2 °C. The same reading corrects the SGP41 gas measurements. Placement matters: direct sun or a warm wall makes any air thermometer read high.",
     "hum": "Relative humidity from the same Sensirion SHT4x sensor, typically accurate to ±1.8 %RH. It also corrects the gas readings. In fog or above about 85 % humidity, water droplets can make the particle readings look higher than they are."
   },
-  "footer": "Sensors: Sensirion SPS30 (particles), SGP41 (VOC, NOx), SHT4x (temperature, humidity). Levels: US EPA AQI for PM2.5, May 2024."
+  "footer": "Sensors: Sensirion SPS30 (particles), SGP41 (VOC, NOx), SHT4x (temperature, humidity). Levels: US EPA AQI for PM2.5, May 2024. Wind and pressure: Open-Meteo, ECMWF model (CC BY 4.0)."
 }

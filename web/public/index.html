@@ -71,6 +71,7 @@
   .sec div { flex: 1 1 110px; padding: 10px 16px 0 0; }
   .sec dt { font-size: 12px; color: var(--muted); }
   .sec dd { margin: 0; font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .sec .arrow { display: inline-block; color: var(--muted); }
 
   /* The level scale sits on the page with a marker, and its definitions fold out below it. */
   .bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; position: relative; height: 10px; margin-top: 8px; }
@@ -210,6 +211,7 @@ let latest = null; // last /api/data payload, so switching language needs no ref
 let failure = null; // { net: true } | { status: number }
 let series = "pm25"; // which sensor the history chart shows
 let open = null; // which sensor's explanation is unfolded in the table
+let weather = null; // Open-Meteo "current" block, or null when it failed
 
 const fill = (template, values) =>
   template.replace(/\{(\w+)\}/g, (_, key) => values[key]);
@@ -336,6 +338,17 @@ function drawScale() {
     .join("");
 }
 
+// Direction is where the wind comes from, named on 8 points; the arrow points where it blows,
+// as on Windy's map.
+function windText() {
+  const from = weather?.wind_direction_10m;
+  // Third-party data goes into innerHTML below, so anything but a number stops here.
+  if (!Number.isFinite(from)) return "—";
+  const name = t.compass[Math.round(from / 45) % 8];
+  return `${num(weather.wind_speed_10m, 0)} kt <span class="arrow" aria-hidden="true"
+    style="transform: rotate(${from + 180}deg)">↑</span> ${name}`;
+}
+
 function renderHero({ now, updated }) {
   const pm = now?.pm25;
   const cat = aqi(pm);
@@ -363,7 +376,8 @@ function renderHero({ now, updated }) {
   document.getElementById("summary").innerHTML = [
     [t.sensors.temp, withUnit("temp", now?.temp)],
     [t.sensors.hum, withUnit("hum", now?.hum)],
-    [t.range24h, range(lastDay(points("pm25")), 1)],
+    [t.wind, windText()],
+    [t.pressure, Number.isFinite(weather?.pressure_msl) ? `${num(weather.pressure_msl, 0)} hPa` : "—"],
   ].map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join("");
 
   setText("stamp", updated
@@ -569,7 +583,26 @@ document.getElementById("lang").addEventListener("click", () => {
   setLanguage(LANGS.find((code) => code !== lang));
 });
 
+// Wind and pressure aren't measured here: they're the ECMWF model (Windy's default) for
+// Đakovo, from Open-Meteo. Pressure is reduced to sea level, as weather reports give it.
+const WEATHER_URL = "https://api.open-meteo.com/v1/forecast?latitude=45.308&longitude=18.410"
+  + "&current=wind_speed_10m,wind_direction_10m,pressure_msl&wind_speed_unit=kn&models=ecmwf_ifs025";
+
+// An Open-Meteo outage costs only its cells, never the sensor readings.
+async function loadWeather() {
+  try {
+    // Rendering waits on this, so a hung request must not hold up the sensor readings.
+    const res = await fetch(WEATHER_URL, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error(`Open-Meteo answered ${res.status}`);
+    weather = (await res.json()).current;
+  } catch (err) {
+    console.error("weather", err);
+    weather = null;
+  }
+}
+
 async function load() {
+  const weatherLoaded = loadWeather();
   const refresh = document.getElementById("refresh");
   // Disabled rather than hidden, so a second click cannot land and the focus ring stays put.
   refresh.disabled = true;
@@ -588,6 +621,7 @@ async function load() {
     failure = res ? { status: res.status } : { net: true };
   }
 
+  await weatherLoaded;
   refresh.disabled = false;
   if (failure) return showFailure();
   // Outside every guard: a bug in here must throw for real, not read as an outage.
