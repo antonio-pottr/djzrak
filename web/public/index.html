@@ -54,7 +54,7 @@
   .link:hover { background: var(--surface); }
   .link:disabled { opacity: .5; cursor: default; }
 
-  /* Hero: the sentence, the level-coloured PM2.5 card, then a quiet row of secondary readings.
+  /* Hero: the sentence, the level-coloured PM2.5 card, and how long ago it was measured.
      The tone is one IQAir band colour in both themes; test.mjs holds each pair to WCAG AA. */
   h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 6.5vw, 52px);
        line-height: 1.1; margin: 28px 0 16px; letter-spacing: -.01em; text-wrap: balance; }
@@ -66,21 +66,18 @@
          font-size: clamp(72px, 20vw, 128px); line-height: .9; letter-spacing: -.03em; }
   .big small { font-family: var(--sans); font-size: 16px; letter-spacing: 0; opacity: .7; margin-left: 8px; }
   #aqi { font-size: 14px; margin-top: 12px; opacity: .85; font-variant-numeric: tabular-nums; }
+  /* A quiet footnote to the card, right-aligned under its bottom-right corner. Kept light by size,
+     not opacity: --muted is already the lightest grey that holds WCAG AA on this background. */
+  #measured { margin: 6px 2px 0 0; font-size: 11px; color: var(--muted); text-align: right; }
 
-  .sec { display: flex; flex-wrap: wrap; margin: 20px 0 24px; padding: 0; border-top: 1px solid var(--rule); }
-  .sec div { flex: 1 1 110px; padding: 10px 16px 0 0; }
-  .sec dt { font-size: 12px; color: var(--muted); }
-  .sec dd { margin: 0; font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
-  .sec .arrow { display: inline-block; color: var(--muted); }
-
-  /* The level scale sits on the page with a marker, and its definitions fold out below it. */
-  .bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; position: relative; height: 10px; margin-top: 8px; }
+  /* The level scale sits right under the card it explains: a bare colour bar with a marker, its
+     level names left to the definitions that fold out below. 20px clears the marker, which pokes
+     6px above the bar. */
+  .bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; position: relative; height: 10px; margin-top: 20px; }
   .bar span { border-radius: 2px; }
   #marker { position: absolute; top: -6px; width: 4px; height: 22px; background: var(--text);
             border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--bg); }
-  .ticks { display: grid; grid-template-columns: repeat(6, 1fr); font-size: 11px; color: var(--muted); margin-top: 6px; }
-  .ticks span { padding-right: 4px; line-height: 1.3; }
-  details { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+  details { font-size: 13px; color: var(--muted); margin: 14px 0 0; }
   details summary { cursor: pointer; }
   details table { width: 100%; border-collapse: collapse; margin: 10px 0; font-variant-numeric: tabular-nums; color: var(--text); }
   details th { text-align: left; font-size: 12px; font-weight: 500; color: var(--muted); padding: 4px 8px; }
@@ -88,6 +85,16 @@
   details th:last-child, details td:last-child { text-align: right; }
   details .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
   details p { margin: 0; }
+
+  /* Secondary readings: one row of four; on phones two rows of two, so the air pair and the
+     weather pair stay together. The rule sets them apart from the PM2.5 block above. */
+  .sec { display: grid; grid-template-columns: repeat(4, 1fr); margin: 24px 0 0; padding: 0;
+         border-top: 1px solid var(--rule); }
+  .sec div { padding: 10px 16px 0 0; }
+  @media (max-width: 560px) { .sec { grid-template-columns: 1fr 1fr; } }
+  .sec dt { font-size: 13px; color: var(--muted); }
+  .sec dd { margin: 0; font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .sec .arrow { display: inline-block; color: var(--muted); }
 
   h2 { font-family: var(--serif); font-weight: 600; font-size: 20px; margin: 40px 0 4px; }
   .sub { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
@@ -129,61 +136,107 @@
 
   iframe { display: block; width: 100%; height: clamp(300px, 55vh, 400px);
            border: 1px solid var(--rule); border-radius: 8px; }
+  /* Contact: a plain surface panel like the chart's, with a normal section heading, and a pill
+     button styled like the chart's active tab. */
+  .pitch { margin: 40px 0 0; padding: 20px 22px; background: var(--surface);
+           border: 1px solid var(--rule); border-radius: 8px; }
+  .pitch h2 { margin: 0 0 4px; }
+  .pitch p { margin: 0 0 16px; color: var(--muted); max-width: 38em; }
+  .cta { display: inline-block; padding: 4px 14px; border-radius: 999px; font-size: 13px;
+         background: var(--text); color: var(--bg); text-decoration: none; }
+  .cta:hover { opacity: .85; }
+  .cta:focus-visible { outline: 2px solid var(--line); outline-offset: 2px; }
   footer { margin-top: 32px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--rule); padding-top: 12px; }
+  footer p { margin: 0 0 6px; }
 </style>
 </head>
 <body>
-<header class="mast">
+<!-- Each block below is self-contained: move, copy or delete one as a whole. JS finds its
+     parts by id, so a copy needs its ids renamed or the original removed. -->
+
+<!-- Masthead: brand, when the reading was taken, refresh and language buttons -->
+<header class="mast" id="masthead">
   <span><b id="brand"></b> · <span id="stamp"></span></span>
   <span class="actions"><button class="link" id="refresh"></button><button class="link" id="lang"></button></span>
 </header>
 
+<!-- Hero: the sentence, the level-coloured PM2.5 card, how long ago it was measured -->
 <section id="hero">
   <h1 id="headline" aria-live="polite"></h1>
   <div class="card">
-    <div class="kicker" id="pm-label"></div>
+    <div class="kicker">PM2.5</div>
     <div class="big"><span id="pm25">–</span><small>µg/m³</small></div>
     <div id="aqi"></div>
   </div>
+  <p id="measured"></p>
+</section>
+
+<!-- Level scale: colour bar with marker, fold-out definitions -->
+<section id="scale">
+  <div class="bar" id="bar" role="img"><i id="marker" hidden></i></div>
+  <details>
+    <summary id="scale-more"></summary>
+    <table>
+      <thead><tr><th id="col-level"></th><th id="col-aqi"></th><th id="col-pm"></th></tr></thead>
+      <tbody id="scale-rows"></tbody>
+    </table>
+    <p id="scale-note"></p>
+  </details>
+</section>
+
+<!-- Readings: temperature, humidity, wind, pressure (the starred two are explained in the footer) -->
+<section id="readings">
   <dl class="sec" id="summary"></dl>
 </section>
 
-<div class="bar" id="bar" role="img"><i id="marker" hidden></i></div>
-<div class="ticks" id="ticks" aria-hidden="true"></div>
-<details>
-  <summary id="scale-more"></summary>
-  <table>
-    <thead><tr><th id="col-level"></th><th id="col-aqi"></th><th id="col-pm"></th></tr></thead>
-    <tbody id="scale-rows"></tbody>
+<!-- Sensors table: every sensor's now, 24 h range, week sparkline -->
+<section id="sensors">
+  <h2 id="sec-sensors"></h2>
+  <p class="sub" id="sec-sensors-note"></p>
+  <table class="tbl">
+    <thead><tr><th id="th-sensor"></th><th id="th-now"></th><th class="rng" id="th-day"></th><th class="spark" id="th-week"></th><th></th></tr></thead>
+    <tbody id="rows"></tbody>
   </table>
-  <p id="scale-note"></p>
-</details>
+</section>
 
-<h2 id="sec-sensors"></h2>
-<p class="sub" id="sec-sensors-note"></p>
-<table class="tbl">
-  <thead><tr><th id="th-sensor"></th><th id="th-now"></th><th class="rng" id="th-day"></th><th class="spark" id="th-week"></th><th></th></tr></thead>
-  <tbody id="rows"></tbody>
-</table>
+<!-- History chart: sensor tabs and the week's line -->
+<section id="history">
+  <h2 id="sec-history"></h2>
+  <p class="sub" id="sec-history-note"></p>
+  <div class="tabs" id="tabs" role="group"></div>
+  <div id="chartwrap">
+    <svg id="chart" role="img"></svg>
+    <div id="tip" hidden></div>
+  </div>
+</section>
 
-<h2 id="sec-history"></h2>
-<p class="sub" id="sec-history-note"></p>
-<div class="tabs" id="tabs" role="group"></div>
-<div id="chartwrap">
-  <svg id="chart" role="img"></svg>
-  <div id="tip" hidden></div>
-</div>
+<!-- Windy map -->
+<section id="windy">
+  <h2 id="sec-map"></h2>
+  <p class="sub" id="sec-map-note"></p>
+  <iframe id="map" loading="lazy"
+    src="https://embed.windy.com/embed2.html?lat=45.308&lon=18.410&detailLat=45.308&detailLon=18.410&zoom=9&overlay=wind&marker=true&metricTemp=%C2%B0C"></iframe>
+</section>
 
-<h2 id="sec-map"></h2>
-<p class="sub" id="sec-map-note"></p>
-<iframe id="map" loading="lazy"
-  src="https://embed.windy.com/embed2.html?lat=45.308&lon=18.410&detailLat=45.308&detailLon=18.410&zoom=9&overlay=wind&marker=true&metricTemp=%C2%B0C"></iframe>
+<!-- Contact: hobby-project disclaimer and a "get in touch" button -->
+<section id="contact" class="pitch">
+  <h2 id="contact-title"></h2>
+  <p id="contact-text"></p>
+  <a class="cta" id="contact-cta"><span id="contact-label"></span> <span aria-hidden="true">→</span></a>
+</section>
 
-<footer id="footer"></footer>
+<!-- Footer: sensor and data credits, and what the starred readings are -->
+<footer id="credits">
+  <p id="footer"></p>
+  <p id="model-note"></p>
+</footer>
 
 <script type="module">
 import { aqi, usAqi, CATEGORIES } from "./aqi.js";
 import { niceRange } from "./scale.js";
+
+// Where the contact section's button sends mail. Public on the page.
+const CONTACT_EMAIL = "hellopottr@gmail.com";
 
 // mdi:information-outline, Material Design Icons (Pictogrammers, Apache-2.0).
 const INFO_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/></svg>`;
@@ -288,7 +341,7 @@ function applyStrings() {
   langButton.textContent = t.switch.label;
   langButton.setAttribute("aria-label", t.switch.aria);
 
-  setText("pm-label", t.pmNow);
+  setText("model-note", t.modelNote);
   document.getElementById("bar").setAttribute("aria-label", t.scale.aria);
   setText("scale-more", t.scale.more);
   setText("col-level", t.scale.colLevel);
@@ -312,19 +365,21 @@ function applyStrings() {
   setText("sec-map", t.sections.map);
   setText("sec-map-note", t.sections.mapNote);
   document.getElementById("map").title = t.map.title;
+  setText("contact-title", t.contact.title);
+  setText("contact-text", t.contact.text);
+  setText("contact-label", t.contact.button);
+  document.getElementById("contact-cta").href =
+    `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(t.contact.subject)}`;
   setText("footer", t.footer);
 }
 
-// The colour bar, its tick labels and the definitions table all derive from CATEGORIES, so a
-// breakpoint change updates every one. Only the open-ended top band needs special casing.
+// The colour bar and the definitions table both derive from CATEGORIES, so a breakpoint change
+// updates both. Only the open-ended top band needs special casing.
 function drawScale() {
   document.getElementById("bar").replaceChildren(
     document.getElementById("marker"),
     ...CATEGORIES.map((band) => Object.assign(document.createElement("span"), { style: `background:${band.bg}` })),
   );
-  document.getElementById("ticks").innerHTML = CATEGORIES
-    // Each level starts one past the previous level's top AQI, as the table below lists it.
-    .map((band, i) => `<span>${t.levels[band.key]}<br>${i === 0 ? 0 : AQI_EDGES[i] + 1}</span>`).join("");
   document.getElementById("scale-rows").innerHTML = CATEGORIES
     .map((band, i) => {
       const pmLo = i === 0 ? 0 : Number((CATEGORIES[i - 1].max + 0.1).toFixed(1));
@@ -349,12 +404,27 @@ function windText() {
     style="transform: rotate(${from + 180}deg)">↑</span> ${name}`;
 }
 
+// "4 minutes ago", in the page's language. The page never polls, so a minute timer below keeps
+// this from going stale in a tab left open.
+function renderMeasured() {
+  const updated = latest?.updated;
+  if (!updated) return setText("measured", "");
+  const minutes = Math.round((Date.now() - updated) / 6e4);
+  if (minutes < 1) return setText("measured", t.measuredNow);
+  const rtf = new Intl.RelativeTimeFormat(t.locale, { numeric: "auto" });
+  const ago = minutes < 60 ? rtf.format(-minutes, "minute")
+    : minutes < 1440 ? rtf.format(-Math.round(minutes / 60), "hour")
+    : rtf.format(-Math.round(minutes / 1440), "day");
+  setText("measured", fill(t.measured, { time: ago }));
+}
+setInterval(() => { if (t) renderMeasured(); }, 6e4);
+
 function renderHero({ now, updated }) {
   const pm = now?.pm25;
   const cat = aqi(pm);
-  const hero = document.getElementById("hero");
-  hero.style.setProperty("--tone-bg", cat.bg);
-  hero.style.setProperty("--tone-ink", cat.ink);
+  // On body, not the hero, so the headline and card keep their tone wherever they are moved.
+  document.body.style.setProperty("--tone-bg", cat.bg);
+  document.body.style.setProperty("--tone-ink", cat.ink);
 
   const headline = document.getElementById("headline");
   if (cat.key === "noData") {
@@ -376,10 +446,12 @@ function renderHero({ now, updated }) {
   document.getElementById("summary").innerHTML = [
     [t.sensors.temp, withUnit("temp", now?.temp)],
     [t.sensors.hum, withUnit("hum", now?.hum)],
-    [t.wind, windText()],
-    [t.pressure, Number.isFinite(weather?.pressure_msl) ? `${num(weather.pressure_msl, 0)} hPa` : "—"],
+    // The asterisk points to #model-note in the footer: these two are modelled, not measured.
+    [`${t.wind}*`, windText()],
+    [`${t.pressure}*`, Number.isFinite(weather?.pressure_msl) ? `${num(weather.pressure_msl, 0)} hPa` : "—"],
   ].map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join("");
 
+  renderMeasured();
   setText("stamp", updated
     ? fill(t.updated, { time: new Date(updated).toLocaleString(t.locale,
       { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) })

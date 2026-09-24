@@ -8,11 +8,13 @@
   "refresh": "Osvježi",
   "headline": "Zrak u Đakovu je trenutno {level}.",
   "noReadings": "Još nema mjerenja",
-  "pmNow": "PM2.5 sada",
+  "measured": "Izmjereno {time}",
+  "measuredNow": "Izmjereno upravo sada",
   "usAqi": "US AQI {value}",
   "updated": "Ažurirano {time}",
   "wind": "Vjetar",
   "pressure": "Tlak zraka",
+  "modelNote": "* Vjetar i tlak nisu s naših senzora: to su podaci modela ECMWF preko Open-Meteo.",
   "compass": ["S", "SI", "I", "JI", "J", "JZ", "Z", "SZ"],
   "switch": {
     "label": "EN",
@@ -83,6 +85,12 @@
     "nox": "Dušikovi oksidi (NO, NO₂) od izgaranja: promet, grijanje, plinski uređaji. Daje ih isti Sensirion SGP41 senzor kao indeks od 1 do 500. Za razliku od VOC indeksa, ovdje je 1 uobičajeno, a sve iznad 1 znači plinove izgaranja iznad uobičajene razine. Pokazuje promjenu kroz vrijeme, a ne koncentraciju.",
     "temp": "Temperatura zraka sa Sensirion SHT4x senzora, uobičajene točnosti ±0,2 °C. Isto očitanje služi za korekciju mjerenja plinova na SGP41. Položaj je bitan: izravno sunce ili topao zid podižu očitanje svakog termometra.",
     "hum": "Relativna vlažnost s istog Sensirion SHT4x senzora, uobičajene točnosti ±1,8 %RH. Služi i za korekciju mjerenja plinova. Po magli ili iznad otprilike 85 % vlage kapljice vode mogu prikazati više čestica nego što ih zaista ima."
+  },
+  "contact": {
+    "title": "Želite ovakvu stanicu?",
+    "text": "Ovo je hobi projekt, a ne profesionalna mjerna oprema, pa su brojke okvirne, a ne službene. Ako želite istu ili sličnu stanicu za svoj dom, dvorište ili posao, slobodno mi se javite.",
+    "button": "Javite se",
+    "subject": "Mjerna stanica za zrak"
   },
   "footer": "Senzori: Sensirion SPS30 (čestice), SGP41 (VOC, NOx), SHT4x (temperatura, vlažnost). Razine: US EPA AQI za PM2.5, svibanj 2024. Vjetar i tlak: Open-Meteo, model ECMWF (CC BY 4.0)."
 }

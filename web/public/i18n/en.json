@@ -8,11 +8,13 @@
   "refresh": "Refresh",
   "headline": "The air in Đakovo is {level} right now.",
   "noReadings": "No readings yet",
-  "pmNow": "PM2.5 now",
+  "measured": "Measured {time}",
+  "measuredNow": "Measured just now",
   "usAqi": "US AQI {value}",
   "updated": "Updated {time}",
   "wind": "Wind",
   "pressure": "Pressure",
+  "modelNote": "* Wind and pressure aren't from our sensors: they're ECMWF model data via Open-Meteo.",
   "compass": ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
   "switch": {
     "label": "HR",
@@ -83,6 +85,12 @@
     "nox": "Nitrogen oxides (NO, NO₂) from burning: traffic, heating, gas appliances. This comes from the same Sensirion SGP41 sensor as an index from 1 to 500. Unlike the VOC Index, 1 is normal here, and anything above 1 means combustion gases above the usual background. It shows change over time, not a concentration.",
     "temp": "Air temperature from a Sensirion SHT4x sensor, typically accurate to ±0.2 °C. The same reading corrects the SGP41 gas measurements. Placement matters: direct sun or a warm wall makes any air thermometer read high.",
     "hum": "Relative humidity from the same Sensirion SHT4x sensor, typically accurate to ±1.8 %RH. It also corrects the gas readings. In fog or above about 85 % humidity, water droplets can make the particle readings look higher than they are."
+  },
+  "contact": {
+    "title": "Want a station like this?",
+    "text": "This is a hobby project, not professional-grade equipment, so treat the numbers as a guide rather than an official measurement. If you'd like the same or something similar for your home, garden or business, feel free to get in touch.",
+    "button": "Get in touch",
+    "subject": "Air quality station"
   },
   "footer": "Sensors: Sensirion SPS30 (particles), SGP41 (VOC, NOx), SHT4x (temperature, humidity). Levels: US EPA AQI for PM2.5, May 2024. Wind and pressure: Open-Meteo, ECMWF model (CC BY 4.0)."
 }
