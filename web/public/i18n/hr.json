@@ -36,8 +36,8 @@
   },
   "sections": {
     "sensors": "Svi senzori",
-    "sensorsNote": "Dodirnite redak za graf od 7 dana ili (i) za objašnjenje mjerenja.",
-    "history": "{name}, zadnjih tjedan dana",
+    "sensorsNote": "Dodirnite redak za graf ili (i) za objašnjenje mjerenja.",
+    "history": "{name}, {range}",
     "historyNote": "Mjerenje svakih 5 minuta. Na PM2.5 obojeni pojasevi su razine kvalitete zraka.",
     "map": "Vjetar u regiji",
     "mapNote": "Odakle dim dolazi i kamo odlazi."
@@ -45,8 +45,8 @@
   "table": {
     "sensor": "Senzor",
     "now": "Sada",
-    "day": "Zadnja 24 h",
-    "week": "7 dana"
+    "day": "Raspon 24 h",
+    "trend": "Zadnja 24 h"
   },
   "sensors": {
     "pm25": "PM2.5",
@@ -67,9 +67,15 @@
     "noData": "Nema podataka"
   },
   "chart": {
-    "aria": "Mjerenja {name} svakih 5 minuta u posljednjih 7 dana",
+    "aria": "Mjerenja {name} svakih 5 minuta, {range}",
     "empty": "Još nema dovoljno povijesti",
-    "tabs": "Senzor na grafu"
+    "tabs": "Senzor na grafu",
+    "interval": "Razdoblje",
+    "ranges": {
+      "1": "zadnja 24 h",
+      "3": "zadnja 3 dana",
+      "7": "zadnjih 7 dana"
+    }
   },
   "map": {
     "title": "Windy animirana karta vjetra sa središtem u Đakovu"

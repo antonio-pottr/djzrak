@@ -36,8 +36,8 @@
   },
   "sections": {
     "sensors": "Every sensor",
-    "sensorsNote": "Tap a row for its 7-day chart, or the (i) for what it measures.",
-    "history": "{name}, the past week",
+    "sensorsNote": "Tap a row for its chart, or the (i) for what it measures.",
+    "history": "{name}, {range}",
     "historyNote": "A reading every 5 minutes. On PM2.5 the shaded bands are the air quality levels.",
     "map": "Regional wind",
     "mapNote": "Where the smoke is coming from, and where it is going."
@@ -45,8 +45,8 @@
   "table": {
     "sensor": "Sensor",
     "now": "Now",
-    "day": "Last 24 h",
-    "week": "7 days"
+    "day": "24 h range",
+    "trend": "Last 24 h"
   },
   "sensors": {
     "pm25": "PM2.5",
@@ -67,9 +67,15 @@
     "noData": "No data"
   },
   "chart": {
-    "aria": "{name} sampled every 5 minutes over the last 7 days",
+    "aria": "{name} sampled every 5 minutes, {range}",
     "empty": "Not enough history yet",
-    "tabs": "Sensor to chart"
+    "tabs": "Sensor to chart",
+    "interval": "Time range",
+    "ranges": {
+      "1": "the past 24 h",
+      "3": "the past 3 days",
+      "7": "the past 7 days"
+    }
   },
   "map": {
     "title": "Windy animated wind map centred on Đakovo"

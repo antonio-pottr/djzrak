@@ -96,7 +96,7 @@
   h2 { font-family: var(--serif); font-weight: 600; font-size: 20px; margin: 40px 0 4px; }
   .sub { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
 
-  /* Every sensor in one table: now, the day's range, the week's shape. */
+  /* Every sensor in one table: now, the day's range, the day's shape. */
   .tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   .tbl thead th { text-align: left; font-size: 12px; font-weight: 500; color: var(--muted);
                   padding: 6px 8px; border-bottom: 1px solid var(--text); }
@@ -121,6 +121,11 @@
   .tabs button { border: 1px solid var(--rule); background: none; border-radius: 999px; padding: 2px 12px;
                  font-size: 13px; cursor: pointer; color: var(--muted); }
   .tabs button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+  /* Top right of the chart card, in the strip above the plot that only the unit label uses.
+     right = #chartwrap's 8px padding + the chart's PAD.right, so the arrow ends where the plot does. */
+  #interval { position: absolute; top: 8px; right: 16px; border: 0; background: var(--surface); border-radius: 6px;
+              padding: 2px 0 2px 4px; field-sizing: content; font: inherit; font-size: 13px; color: var(--text); cursor: pointer; }
+  #interval:focus-visible { outline: 2px solid var(--line); outline-offset: 2px; }
 
   #chartwrap { position: relative; background: var(--surface); border: 1px solid var(--rule);
                border-radius: 8px; padding: 12px 8px 4px; }
@@ -187,22 +192,23 @@
   <dl class="sec" id="summary"></dl>
 </section>
 
-<!-- Sensors table: every sensor's now, 24 h range, week sparkline -->
+<!-- Sensors table: every sensor's now, 24 h range, 24 h sparkline -->
 <section id="sensors">
   <h2 id="sec-sensors"></h2>
   <p class="sub" id="sec-sensors-note"></p>
   <table class="tbl">
-    <thead><tr><th id="th-sensor"></th><th id="th-now"></th><th class="rng" id="th-day"></th><th class="spark" id="th-week"></th><th></th></tr></thead>
+    <thead><tr><th id="th-sensor"></th><th id="th-now"></th><th class="rng" id="th-day"></th><th class="spark" id="th-trend"></th><th></th></tr></thead>
     <tbody id="rows"></tbody>
   </table>
 </section>
 
-<!-- History chart: sensor tabs and the week's line -->
+<!-- History chart: sensor tabs, time range select, and the line -->
 <section id="history">
   <h2 id="sec-history"></h2>
   <p class="sub" id="sec-history-note"></p>
   <div class="tabs" id="tabs" role="group"></div>
   <div id="chartwrap">
+    <select id="interval"></select>
     <svg id="chart" role="img"></svg>
     <div id="tip" hidden></div>
   </div>
@@ -269,6 +275,7 @@ let latest = null; // last /api/data payload, so switching language needs no ref
 // never reaches it — without this, switching language leaves the error in the previous language.
 let failure = null; // { net: true } | { status: number }
 let series = "pm25"; // which sensor the history chart shows
+let days = 1; // the history chart's time range, one of INTERVALS
 let open = null; // which sensor's explanation is unfolded in the table
 let weather = null; // Open-Meteo "current" block, or null when it failed
 
@@ -308,7 +315,15 @@ const points = (key) => {
     .filter((p) => typeof p.v === "number");
 };
 
-const lastDay = (pts) => pts.filter((p) => p.ts > Date.now() - 864e5);
+const since = (pts, n) => pts.filter((p) => p.ts > Date.now() - n * 864e5);
+
+// The chart's time ranges, in days; the Worker keeps a week. Tick labels go from times
+// to dates as the range grows.
+const INTERVALS = {
+  1: { hour: "2-digit", minute: "2-digit" },
+  3: { weekday: "short", hour: "2-digit", minute: "2-digit" },
+  7: { day: "numeric", month: "short" },
+};
 
 const range = (pts, digits) => {
   if (!pts.length) return "—";
@@ -361,12 +376,19 @@ function applyStrings() {
   setText("th-sensor", t.table.sensor);
   setText("th-now", t.table.now);
   setText("th-day", t.table.day);
-  setText("th-week", t.table.week);
+  setText("th-trend", t.table.trend);
 
-  setText("sec-history", fill(t.sections.history, { name: t.sensors[series] }));
+  const labels = { name: t.sensors[series], range: t.chart.ranges[days] };
+  setText("sec-history", fill(t.sections.history, labels));
   setText("sec-history-note", t.sections.historyNote);
   document.getElementById("tabs").setAttribute("aria-label", t.chart.tabs);
-  svg.setAttribute("aria-label", fill(t.chart.aria, { name: t.sensors[series] }));
+  const interval = document.getElementById("interval");
+  interval.setAttribute("aria-label", t.chart.interval);
+  interval.innerHTML = Object.keys(INTERVALS).map((n) => {
+    const text = t.chart.ranges[n];
+    return `<option value="${n}"${+n === days ? " selected" : ""}>${text[0].toUpperCase()}${text.slice(1)}</option>`;
+  }).join("");
+  svg.setAttribute("aria-label", fill(t.chart.aria, labels));
 
   setText("sec-map", t.sections.map);
   setText("sec-map-note", t.sections.mapNote);
@@ -453,11 +475,11 @@ function renderHero({ now, updated }) {
 
 function renderRows({ now }) {
   document.getElementById("rows").innerHTML = SENSORS.map(([key, , digits]) => {
-    const pts = points(key);
+    const pts = since(points(key), 1);
     const row = `<tr class="row${key === series ? " on" : ""}" data-key="${key}">
       <th scope="row">${t.sensors[key]}</th>
       <td class="now">${withUnit(key, now?.[key])}</td>
-      <td class="rng">${range(lastDay(pts), digits)}</td>
+      <td class="rng">${range(pts, digits)}</td>
       <td class="spark">${sparkline(pts)}</td>
       <td class="info"><button class="about" data-about="${key}" aria-expanded="${open === key}"
         aria-label="${fill(t.about.open, { name: t.sensors[key] })}">${INFO_ICON}</button></td>
@@ -491,7 +513,7 @@ function drawChart() {
   const W = svg.clientWidth || 560;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
 
-  chartPoints = points(series);
+  chartPoints = since(points(series), days);
   if (chartPoints.length < 2) {
     plot = null;
     svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="14"
@@ -499,7 +521,7 @@ function drawChart() {
     return;
   }
 
-  // 1 unit of headroom so the week's peak (and trough) never touches the edge.
+  // 1 unit of headroom so the peak (and trough) never touches the edge.
   const { unit, zero } = UNITS[series];
   const values = chartPoints.map((p) => p.v);
   const { step, bottom, top } = niceRange(zero ? 0 : Math.min(...values) - 1, Math.max(...values) + 1);
@@ -520,7 +542,7 @@ function drawChart() {
 
   let svgText = "";
 
-  // PM2.5 gets its air quality levels shaded behind the line, so the week reads as levels.
+  // PM2.5 gets its air quality levels shaded behind the line, so the range reads as levels.
   if (series === "pm25") {
     const clampY = (v) => Math.max(PAD.top, Math.min(PAD.top + h, plot.y(v)));
     let lo = 0;
@@ -541,13 +563,13 @@ function drawChart() {
     svgText += grid(PAD.left, y, W - PAD.right, y) + label(PAD.left - 8, y + 4, +v.toFixed(1), "end");
   }
 
-  // Five dated ticks, each with a vertical gridline.
+  // Five ticks, each with a vertical gridline.
   const every = Math.ceil((n - 1) / 4);
-  const fmt = { day: "numeric", month: "short" };
+  const fmt = INTERVALS[days];
   for (let i = 0; i < n; i += every) {
     const x = plot.x(i);
     svgText += grid(x, PAD.top, x, PAD.top + h)
-      + label(x, H - 8, new Date(chartPoints[i].ts).toLocaleDateString(t?.locale, fmt), "middle");
+      + label(x, H - 8, new Date(chartPoints[i].ts).toLocaleString(t?.locale, fmt), "middle");
   }
 
   const line = chartPoints.map((p, i) => `${plot.x(i).toFixed(1)},${plot.y(p.v).toFixed(1)}`).join(" ");
@@ -619,6 +641,12 @@ document.getElementById("rows").addEventListener("click", (e) => {
 document.getElementById("tabs").addEventListener("click", (e) => {
   const key = e.target.closest("button")?.dataset.key;
   if (key) selectSeries(key);
+});
+
+document.getElementById("interval").addEventListener("change", (e) => {
+  days = Number(e.target.value);
+  applyStrings();
+  drawChart();
 });
 
 svg.addEventListener("pointermove", showTip);
