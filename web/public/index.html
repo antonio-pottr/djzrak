@@ -145,6 +145,8 @@
   .cta:focus-visible { outline: 2px solid var(--line); outline-offset: 2px; }
   footer { margin-top: 32px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--rule); padding-top: 12px; }
   footer p { margin: 0 0 6px; }
+  footer a { color: inherit; text-underline-offset: 2px; }
+  footer a:hover { color: var(--text); }
 </style>
 </head>
 <body>
@@ -233,6 +235,14 @@ import { niceRange } from "./scale.js";
 
 // Where the contact section's button sends mail. Public on the page.
 const CONTACT_EMAIL = "hellopottr@gmail.com";
+
+// Sensirion product pages for the names in the footer credits. The YAML's sht4x driver covers
+// the whole family, so SHT4x links to Sensirion's family page rather than one chip.
+const SENSOR_PAGES = {
+  "Sensirion SPS30": "https://sensirion.com/products/catalog/SPS30",
+  "SGP41": "https://sensirion.com/products/catalog/SGP41",
+  "SHT4x": "https://sensirion.com/sht4x",
+};
 
 // mdi:information-outline, Material Design Icons (Pictogrammers, Apache-2.0).
 const INFO_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/></svg>`;
@@ -366,7 +376,10 @@ function applyStrings() {
   setText("contact-label", t.contact.button);
   document.getElementById("contact-cta").href =
     `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(t.contact.subject)}`;
-  setText("footer", t.footer);
+  // The sensor names in the credits link to their Sensirion product pages.
+  document.getElementById("footer").innerHTML = t.footer.replace(
+    new RegExp(Object.keys(SENSOR_PAGES).join("|"), "g"),
+    (name) => `<a href="${SENSOR_PAGES[name]}" target="_blank" rel="noopener">${name}</a>`);
 }
 
 // The colour bar and the definitions table both derive from CATEGORIES, so a breakpoint change
