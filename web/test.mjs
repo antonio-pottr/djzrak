@@ -78,10 +78,11 @@ assert.equal(aqi(9.1).key, "moderate");
 assert.ok(usAqi(9.1) > 50);
 
 // index.html's palette, both themes. Muted text sits on the page and on the table's selected
-// row (--surface); the chart line and sparklines on --surface need 3:1 as graphics.
+// row (--surface); the chart line and sparklines on --surface need 3:1 as graphics. The
+// overlay line's axis labels are text in its colour, so --line2 needs 4.5:1.
 const THEMES = {
-  light: { bg: "#faf8f4", surface: "#ffffff", text: "#1d1b18", muted: "#6b665d", line: "#2d5b8a" },
-  dark: { bg: "#171614", surface: "#1f1d1a", text: "#efebe4", muted: "#a39d92", line: "#8fb8e3" },
+  light: { bg: "#faf8f4", surface: "#ffffff", text: "#1d1b18", muted: "#6b665d", line: "#2d5b8a", line2: "#b4531a" },
+  dark: { bg: "#171614", surface: "#1f1d1a", text: "#efebe4", muted: "#a39d92", line: "#8fb8e3", line2: "#eea46c" },
 };
 const pageSrc = readFileSync("./public/index.html", "utf8");
 for (const [name, c] of Object.entries(THEMES)) {
@@ -93,6 +94,7 @@ for (const [name, c] of Object.entries(THEMES)) {
     assert.ok(contrast(c.text, c[ground]) >= 4.5, `${name}: text on --${ground}`);
     assert.ok(contrast(c.muted, c[ground]) >= 4.5, `${name}: muted text on --${ground}`);
     assert.ok(contrast(c.line, c[ground]) >= 3, `${name}: chart line on --${ground}`);
+    assert.ok(contrast(c.line2, c[ground]) >= 4.5, `${name}: overlay line and its labels on --${ground}`);
   }
 }
 
@@ -125,6 +127,7 @@ for (const [code, table] of Object.entries(strings)) {
   assert.match(table.about.open, /\{name\}/, `${code}.json about.open needs {name}`);
   assert.match(table.sections.history, /\{name\}/, `${code}.json sections.history needs {name}`);
   assert.match(table.chart.aria, /\{name\}/, `${code}.json chart.aria needs {name}`);
+  assert.match(table.chart.pair, /\{a\}.*\{b\}/, `${code}.json chart.pair needs {a} and {b}`);
   // The page splits the headline on {level} to wrap the verdict in a <mark>, so exactly one.
   assert.equal(table.headline.split("{level}").length, 2, `${code}.json headline needs one {level}`);
   // noData never reaches the headline; every other level does.

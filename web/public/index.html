@@ -21,6 +21,7 @@
     --muted: #6b665d;
     --rule: #e6e1d8;
     --line: #2d5b8a;
+    --line2: #b4531a;
     --grid: #ece7de;
   }
   @media (prefers-color-scheme: dark) {
@@ -31,6 +32,7 @@
       --muted: #a39d92;
       --rule: #34302b;
       --line: #8fb8e3;
+      --line2: #eea46c;
       --grid: #2a2723;
     }
   }
@@ -121,6 +123,12 @@
   .tabs button { border: 1px solid var(--rule); background: none; border-radius: 999px; padding: 2px 12px;
                  font-size: 13px; cursor: pointer; color: var(--muted); }
   .tabs button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+  /* A long press opens the context menu or selects text on touch, and starts the overlay here. */
+  .tabs button { -webkit-touch-callout: none; user-select: none; }
+  /* Overlaid, the two pressed tabs double as the legend: a dot in each line's colour. */
+  .tabs.overlay button[aria-pressed="true"]::before { content: ""; display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--line); margin-right: 6px; }
+  .tabs.overlay button.second::before { background: var(--line2); }
   /* Top right of the chart card, in the strip above the plot that only the unit label uses.
      right = #chartwrap's 8px padding + the chart's PAD.right, so the arrow ends where the plot does. */
   #interval { position: absolute; top: 8px; right: 16px; border: 0; background: var(--surface); border-radius: 6px;
@@ -275,6 +283,7 @@ let latest = null; // last /api/data payload, so switching language needs no ref
 // never reaches it — without this, switching language leaves the error in the previous language.
 let failure = null; // { net: true } | { status: number }
 let series = "pm25"; // which sensor the history chart shows
+let second = null; // a sensor laid over it on its own axis, or null
 let days = 1; // the history chart's time range, one of INTERVALS
 let open = null; // which sensor's explanation is unfolded in the table
 let weather = null; // Open-Meteo "current" block, or null when it failed
@@ -307,11 +316,12 @@ const withUnit = (key, v) => {
 };
 
 // The Worker sends history as columns ({ ts: [...], pm25: [...] }) with null for a missing
-// reading; the table and chart want [{ ts, v }] with the gaps dropped.
-const points = (key) => {
+// reading; the table and chart want [{ ts, v }] with the gaps dropped. The chart's overlay
+// rides along as v2, which keeps its gaps (null) so both lines share one x per reading.
+const points = (key, other) => {
   const history = latest?.history;
   if (!history?.[key]) return [];
-  return history.ts.map((ts, i) => ({ ts, v: history[key][i] }))
+  return history.ts.map((ts, i) => ({ ts, v: history[key][i], v2: history[other]?.[i] }))
     .filter((p) => typeof p.v === "number");
 };
 
@@ -378,7 +388,8 @@ function applyStrings() {
   setText("th-day", t.table.day);
   setText("th-trend", t.table.trend);
 
-  const labels = { name: t.sensors[series], range: t.chart.ranges[days] };
+  const name = second ? fill(t.chart.pair, { a: t.sensors[series], b: t.sensors[second] }) : t.sensors[series];
+  const labels = { name, range: t.chart.ranges[days] };
   setText("sec-history", fill(t.sections.history, labels));
   setText("sec-history-note", t.sections.historyNote);
   document.getElementById("tabs").setAttribute("aria-label", t.chart.tabs);
@@ -489,8 +500,10 @@ function renderRows({ now }) {
 }
 
 function renderTabs() {
-  document.getElementById("tabs").innerHTML = SENSORS.map(([key]) =>
-    `<button data-key="${key}" aria-pressed="${key === series}">${t.sensors[key]}</button>`).join("");
+  const tabs = document.getElementById("tabs");
+  tabs.classList.toggle("overlay", second !== null);
+  tabs.innerHTML = SENSORS.map(([key]) =>
+    `<button data-key="${key}" aria-pressed="${key === series || key === second}"${key === second ? ' class="second"' : ""}>${t.sensors[key]}</button>`).join("");
 }
 
 function render() {
@@ -504,16 +517,22 @@ const svg = document.getElementById("chart");
 const tip = document.getElementById("tip");
 const H = 240;
 const PAD = { top: 26, right: 8, bottom: 26, left: 36 };
+// Room for the overlay's axis on the right, whose ticks carry their unit ("25 µg/m³").
+const PAD_RIGHT_OVERLAY = 56;
+
+// 1 unit of headroom so the peak (and trough) never touches the edge.
+const axis = (key, values) =>
+  niceRange(UNITS[key].zero ? 0 : Math.min(...values) - 1, Math.max(...values) + 1);
 
 let chartPoints = [];
-let plot = null; // { x(i), y(v), i(px) }
+let plot = null; // { x(i), y(v), y2(v) or null, i(px) }
 
 function drawChart() {
   hideTip();
   const W = svg.clientWidth || 560;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
 
-  chartPoints = since(points(series), days);
+  chartPoints = since(points(series, second), days);
   if (chartPoints.length < 2) {
     plot = null;
     svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="14"
@@ -521,24 +540,30 @@ function drawChart() {
     return;
   }
 
-  // 1 unit of headroom so the peak (and trough) never touches the edge.
-  const { unit, zero } = UNITS[series];
-  const values = chartPoints.map((p) => p.v);
-  const { step, bottom, top } = niceRange(zero ? 0 : Math.min(...values) - 1, Math.max(...values) + 1);
-  const w = W - PAD.left - PAD.right;
+  const { unit } = UNITS[series];
+  const { step, bottom, top } = axis(series, chartPoints.map((p) => p.v));
+  // The overlay is drawn only when it has readings in this range.
+  const values2 = chartPoints.map((p) => p.v2).filter((v) => typeof v === "number");
+  const range2 = second && values2.length ? axis(second, values2) : null;
+  const right = range2 ? PAD_RIGHT_OVERLAY : PAD.right;
+  const w = W - PAD.left - right;
   const h = H - PAD.top - PAD.bottom;
   const n = chartPoints.length;
+  const toY = ({ bottom: lo, top: hi }) => (v) => PAD.top + h - ((v - lo) / (hi - lo)) * h;
 
   plot = {
     x: (i) => PAD.left + (i / (n - 1)) * w,
-    y: (v) => PAD.top + h - ((v - bottom) / (top - bottom)) * h,
+    y: toY({ bottom, top }),
+    y2: range2 && toY(range2),
     i: (px) => Math.min(n - 1, Math.max(0, Math.round(((px - PAD.left) / w) * (n - 1)))),
   };
 
   const grid = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
     stroke="var(--grid)" stroke-width="1"/>`;
-  const label = (x, y, text, anchor) => `<text x="${x}" y="${y}" text-anchor="${anchor}"
-    font-size="11" fill="var(--muted)">${text}</text>`;
+  const label = (x, y, text, anchor, color = "var(--muted)") => `<text x="${x}" y="${y}" text-anchor="${anchor}"
+    font-size="11" fill="${color}">${text}</text>`;
+  // Overlaid, each axis takes its line's colour so it is clear which scale reads which line.
+  const leftColor = range2 ? "var(--line)" : undefined;
 
   let svgText = "";
 
@@ -556,11 +581,23 @@ function drawChart() {
   }
 
   // Unit sits above the y axis.
-  svgText += label(PAD.left - 4, 12, unit, "start");
+  svgText += label(PAD.left - 4, 12, unit, "start", leftColor);
 
   for (let v = bottom; v <= top + 1e-9; v += step) {
     const y = plot.y(v);
-    svgText += grid(PAD.left, y, W - PAD.right, y) + label(PAD.left - 8, y + 4, +v.toFixed(1), "end");
+    svgText += grid(PAD.left, y, W - right, y) + label(PAD.left - 8, y + 4, +v.toFixed(1), "end", leftColor);
+  }
+
+  // The overlay's ticks sit on the right without gridlines of their own, which would not line up.
+  if (range2) {
+    const unit2 = UNITS[second].unit;
+    for (let v = range2.bottom; v <= range2.top + 1e-9; v += range2.step) {
+      svgText += label(W - right + 6, plot.y2(v) + 4, `${+v.toFixed(1)}${unit2 ? ` ${unit2}` : ""}`, "start", "var(--line2)");
+    }
+    const line2 = chartPoints.flatMap((p, i) => typeof p.v2 === "number"
+      ? [`${plot.x(i).toFixed(1)},${plot.y2(p.v2).toFixed(1)}`] : []).join(" ");
+    svgText += `<polyline points="${line2}" fill="none" stroke="var(--line2)"
+      stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
   }
 
   // Five ticks, each with a vertical gridline.
@@ -578,7 +615,8 @@ function drawChart() {
       stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
     <line id="guide" y1="${PAD.top}" y2="${PAD.top + h}" stroke="var(--muted)"
       opacity=".6" stroke-width="1" hidden/>
-    <circle id="dot" r="4.5" fill="var(--line)" stroke="var(--surface)" stroke-width="2" hidden/>`;
+    <circle id="dot" r="4.5" fill="var(--line)" stroke="var(--surface)" stroke-width="2" hidden/>
+    <circle id="dot2" r="4.5" fill="var(--line2)" stroke="var(--surface)" stroke-width="2" hidden/>`;
   svg.innerHTML = svgText;
 }
 
@@ -586,7 +624,13 @@ function hideTip() {
   tip.hidden = true;
   svg.querySelector("#guide")?.setAttribute("hidden", "");
   svg.querySelector("#dot")?.setAttribute("hidden", "");
+  svg.querySelector("#dot2")?.setAttribute("hidden", "");
 }
+
+const tipValue = (key, v) => {
+  const { unit, tipDigits } = UNITS[key];
+  return typeof v === "number" ? `${v.toFixed(tipDigits)}${unit ? ` ${unit}` : ""}` : "—";
+};
 
 function showTip(event) {
   if (!plot) return;
@@ -608,8 +652,16 @@ function showTip(event) {
   dot.setAttribute("cx", x);
   dot.setAttribute("cy", y);
 
-  const { unit, tipDigits } = UNITS[series];
-  tip.innerHTML = `<b>${point.v.toFixed(tipDigits)}${unit ? ` ${unit}` : ""}</b>${new Date(point.ts)
+  const dot2 = svg.querySelector("#dot2");
+  const has2 = plot.y2 && typeof point.v2 === "number";
+  dot2.toggleAttribute("hidden", !has2);
+  if (has2) {
+    dot2.setAttribute("cx", x);
+    dot2.setAttribute("cy", plot.y2(point.v2));
+  }
+
+  const value = tipValue(series, point.v) + (plot.y2 ? ` · ${tipValue(second, point.v2)}` : "");
+  tip.innerHTML = `<b>${value}</b>${new Date(point.ts)
     .toLocaleString(t.locale, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
   tip.hidden = false;
   // Clamp so the tooltip never hangs off either edge of the chart card.
@@ -619,10 +671,16 @@ function showTip(event) {
   tip.style.top = `${svg.offsetTop + y - 10}px`;
 }
 
-function selectSeries(key) {
-  series = key;
+function redrawChart() {
   applyStrings();
   if (latest) render(); else drawChart();
+}
+
+function selectSeries(key) {
+  // Picking the overlaid sensor swaps the two, so the overlay survives.
+  if (key === second) second = series;
+  series = key;
+  redrawChart();
 }
 
 document.getElementById("rows").addEventListener("click", (e) => {
@@ -638,9 +696,46 @@ document.getElementById("rows").addEventListener("click", (e) => {
   document.getElementById("sec-history").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
-document.getElementById("tabs").addEventListener("click", (e) => {
+// Lays a sensor over the charted one; with an overlay already on, any long press takes it off.
+function toggleOverlay(key) {
+  if (second === null && key === series) return;
+  second = second === null ? key : null;
+  redrawChart();
+}
+
+// A plain click charts that sensor. With an overlay on, the sensor charted before the long
+// press stays put and the click picks what is laid over it instead.
+function clickTab(key) {
+  if (second === null) return selectSeries(key);
+  if (key === series) return;
+  second = key;
+  redrawChart();
+}
+
+// A long press on a tab (Shift+click from a keyboard or mouse) toggles the overlay.
+const tabs = document.getElementById("tabs");
+const LONG_PRESS_MS = 500;
+let pressTimer;
+let longPressed = false;
+tabs.addEventListener("pointerdown", (e) => {
   const key = e.target.closest("button")?.dataset.key;
-  if (key) selectSeries(key);
+  longPressed = false;
+  if (!key || e.button !== 0) return;
+  pressTimer = setTimeout(() => {
+    longPressed = true;
+    toggleOverlay(key);
+  }, LONG_PRESS_MS);
+});
+// pointercancel covers a touch that turns into a scroll.
+for (const type of ["pointerup", "pointerout", "pointercancel"]) {
+  tabs.addEventListener(type, () => clearTimeout(pressTimer));
+}
+tabs.addEventListener("contextmenu", (e) => e.preventDefault());
+tabs.addEventListener("click", (e) => {
+  const key = e.target.closest("button")?.dataset.key;
+  // The click that ends a long press has already done its job.
+  if (!key || longPressed) return;
+  if (e.shiftKey) toggleOverlay(key); else clickTab(key);
 });
 
 document.getElementById("interval").addEventListener("change", (e) => {

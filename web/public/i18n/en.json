@@ -38,7 +38,7 @@
     "sensors": "Every sensor",
     "sensorsNote": "Tap a row for its chart, or the (i) for what it measures.",
     "history": "{name}, {range}",
-    "historyNote": "A reading every 5 minutes. On PM2.5 the shaded bands are the air quality levels.",
+    "historyNote": "A reading every 5 minutes. On PM2.5 the shaded bands are the air quality levels. Long-press another sensor to lay it over the same chart.",
     "map": "Regional wind",
     "mapNote": "Where the smoke is coming from, and where it is going."
   },
@@ -71,6 +71,7 @@
     "empty": "Not enough history yet",
     "tabs": "Sensor to chart",
     "interval": "Time range",
+    "pair": "{a} and {b}",
     "ranges": {
       "1": "the past 24 h",
       "3": "the past 3 days",

@@ -38,7 +38,7 @@
     "sensors": "Svi senzori",
     "sensorsNote": "Dodirnite redak za graf ili (i) za objašnjenje mjerenja.",
     "history": "{name}, {range}",
-    "historyNote": "Mjerenje svakih 5 minuta. Na PM2.5 obojeni pojasevi su razine kvalitete zraka.",
+    "historyNote": "Mjerenje svakih 5 minuta. Na PM2.5 obojeni pojasevi su razine kvalitete zraka. Dugo pritisnite drugi senzor da ga prikažete na istom grafu.",
     "map": "Vjetar u regiji",
     "mapNote": "Odakle dim dolazi i kamo odlazi."
   },
@@ -71,6 +71,7 @@
     "empty": "Još nema dovoljno povijesti",
     "tabs": "Senzor na grafu",
     "interval": "Razdoblje",
+    "pair": "{a} i {b}",
     "ranges": {
       "1": "zadnja 24 h",
       "3": "zadnja 3 dana",
